@@ -16,7 +16,7 @@ class SimpleGyro:
     def get_yaw(self):
         return Rotation2d(self._yaw_rad)
 
-    def set__sim__yaw__rad(self, yaw_rad: float):
+    def set_sim_yaw_rad(self, yaw_rad: float):
         self._yaw_rad = yaw_rad
 
 class SwerveDriveSim:
@@ -60,9 +60,9 @@ class SwerveDriveSim:
         # physics.pi reads this to move the robot
         self.last_cmd = ChassisSpeeds(0.0, 0.0, 0.0)
 
-    def drive(self, vx_mps: float, omega_radps: float):
-         vx_mps = max(-self.max_speed_mps, min(self.max_speeds_mps, vx_mps))
-         vy_mps = max(-self.max_speed_mps, min(self.max_speeds_mps, vy_mps))
+    def drive(self, vx_mps: float,vy_mps: float, omega_radps: float):
+         vx_mps = max(-self.max_speed_mps, min(self.max_speed_mps, vx_mps))
+         vy_mps = max(-self.max_speed_mps, min(self.max_speed_mps, vy_mps))
          omega_radps = max(-self.max_omega_radps, min(self.max_omega_radps, omega_radps))
 
          if self.field_oriented:
@@ -73,7 +73,7 @@ class SwerveDriveSim:
          else:
             self._desired_cmd = ChassisSpeeds(vx_mps, vy_mps, omega_radps)
 
-            self.last_cmd = self._desired_cmd
+         self.last_cmd = self._desired_cmd
 
     def execute(self):
         states = self.kinematics.toSwerveModuleStates(self._desired_cmd)

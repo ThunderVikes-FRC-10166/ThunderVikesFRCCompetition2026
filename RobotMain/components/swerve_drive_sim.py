@@ -75,6 +75,20 @@ class SwerveDriveSim:
 
             self.last_cmd = self._desired_cmd
 
+    def execute(self):
+        states = self.kinematics.toSwerveModuleStates(self._desired_cmd)
+        SwerveDrive4Kinematics.desaturateWheelSpeeds(states, self.max_speed_mps)
+
+        self.fl.set(states[0].speed, states[0].angle.radians())
+        self.fr.set(states[1].speed, states[1].angle.radians())
+        self.bl.set(states[2].speed, states[2].angle.radians())
+        self.br.set(states[3].speed, states[3].angle.radians())
+
+        self.fl.execute()
+        self.fr.execute()
+        self.bl.execute()
+        self.br.execute()
+
 
 
 

@@ -1,7 +1,10 @@
 import magicbot
 import wpilib
+import math
 
-# ------------------------------------------------------------------------------
+from components.swerve_drive_sim import SwerveDriveSim
+# ----------------------
+# --------------------------------------------------------
 #  MagicBot Overview
 # ------------------------------------------------------------------------------
 # MagicBot is a framework built on top of WPILib that helps FRC teams organize

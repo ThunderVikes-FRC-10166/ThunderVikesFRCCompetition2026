@@ -1,473 +1,357 @@
 
-# MagicBot Autonomous Guide (FRC 2026) — Step-by-step for Beginners (RobotPy 2026)
-### Works in Simulator first (SwerveDriveSim), then upgrades to real robot later
+# MagicBot Autonomous in SIM (RobotPy 2026) — Step-by-Step Guide for Students  
+### Goal: Your autonomous shows up in the GUI, you select it, press Enable, and the robot drives (time-based).
 
-This guide teaches you how to build autonomous programs **one step at a time** using **MagicBot**:
+This guide is written for students who are **new to Python**. We’ll go slowly, explain why each part exists, and show the exact files you must modify.
 
-1) Start with a **time-based** autonomous (easiest to debug)
-2) Upgrade to a **distance-based** autonomous (more consistent)
-3) Build a **state machine** auto: forward → left → forward
-4) Learn different kinds of autonomous states (turning, waiting, aligning, scoring)
-5) Understand how to *think about* maximizing points during Auto for the 2026 game
+✅ We are focusing on **SIMULATOR first**.  
+✅ We are focusing on **time-based** autonomous (drive for X seconds, then stop).  
+✅ This approach will also work on the **real robot** later with the same structure (notes at the end).
 
-✅ We will write autos assuming you are running the **SIMULATOR** first.  
-That means in the autonomous class we will type:
+---
+
+## 0) What you’re building
+
+In Teleop, joystick controls the robot.
+
+In Autonomous, **your code** controls the robot.
+
+Either way, your drivetrain is always driven by the same call:
 
 ```python
-swerve: SwerveDriveSim
+swerve.drive(vx_mps, vy_mps, omega_radps)
 ````
 
-Later on the real robot you will change it to:
-
-```python
-swerve: SwerveDriveReal
-```
+In SIM, you’ll see the robot move on the Field2d / sim view when you enable autonomous.
 
 ---
 
-## 0) One important concept before we code
+## 1) Required project structure
 
-Whether it is Teleop or Autonomous, driving always comes down to calling:
-
-```python
-self.swerve.drive(vx_mps, vy_mps, omega_radps)
-```
-
-In Teleop:
-
-* the driver joystick decides `vx, vy, omega`
-
-In Auto:
-
-* **your code** decides `vx, vy, omega`
-
-Same drivetrain code. Different “who is controlling it”.
-
----
-
-## 1) How MagicBot loads Autonomous modes
-
-MagicBot looks for a Python package named `autonomous`.
-
-✅ Create this folder:
+Your RobotMain folder must look like this:
 
 ```
 RobotMain/
   robot.py
+  physics.py
+  components/
+    swerve_drive_sim.py
+    swerve_module_sim.py
   autonomous/
     __init__.py
     drive_box_auto.py
 ```
 
-### `autonomous/__init__.py`
+### Why do we need `autonomous/__init__.py`?
 
-Create the file and leave it empty.
-It tells Python “this is a package”.
+Python only treats a folder as a package if it contains `__init__.py`.
+If you forget it, the sim GUI will usually show **AutonomousMode: None** only.
 
-If you don’t have this folder/package, MagicBot may print:
+✅ Create the file:
 
-> Cannot load the 'autonomous' package
-
----
-
-## 2) Time-based vs Distance-based Auto
-
-### A) Time-based Auto (easy to learn)
-
-Example:
-
-* “Drive forward for 1.5 seconds”
-
-Pros: easiest to get working
-Cons: not perfectly consistent (battery, carpet, wheel slip)
-
-### B) Distance-based Auto (better for competition)
-
-Example:
-
-* “Drive forward 2.0 meters”
-
-Pros: more consistent and repeatable
-Cons: needs a way to measure distance (pose / odometry or encoders)
-
-✅ We will do time-based first, then upgrade to distance-based.
+* `RobotMain/autonomous/__init__.py`
+* Leave it empty
 
 ---
 
-# PART 1 — Time-based Auto (Starter version)
+## 2) The Autonomous class file (the mode students select in the GUI)
 
-## 3) What a state machine is (beginner definition)
+Create this file:
 
-A **state machine** is just:
+* `RobotMain/autonomous/drive_box_auto.py`
 
-* a variable that stores “what step are we on?”
+### 2.1 Imports
 
-Example states:
+Type:
 
-* `"FORWARD_1"`
-* `"LEFT"`
-* `"FORWARD_2"`
-* `"DONE"`
+```python
+import wpilib
+```
 
-In each loop, you:
+### 2.2 Make the autonomous class
 
-1. check the state
-2. do the action
-3. switch to the next state when it’s time
+Type:
 
----
+```python
+class DriveBoxAuto:
+```
 
-## 4) Create your first autonomous file
+### 2.3 Give it a name (so it appears in the GUI)
 
-Create:
-`autonomous/drive_box_auto.py`
+MagicBot discovers auto modes by looking for a class variable called `MODE_NAME`.
 
-At the top:
+✅ Must be written like this (NO type annotation):
+
+```python
+    MODE_NAME = "Drive Box (SIM)"
+```
+
+Optional (recommended): auto-select it by default:
+
+```python
+    DEFAULT = True
+```
+
+### 2.4 Add the methods MagicBot calls
+
+MagicBot calls these methods during Auto:
+
+* `on_enable()` — runs once when Auto starts
+* `on_iteration(time_elapsed)` — runs repeatedly while Auto is enabled
+* `on_disable()` — runs once when Auto stops
+
+Type the full class like this:
 
 ```python
 import wpilib
 
-from ..components.swerve_drive_sim import SwerveDriveSim
-```
-
-Why import `SwerveDriveSim`?
-So you can type-hint it in the class. It helps beginners understand what `swerve` is.
-
----
-
-## 5) Write the autonomous class (students should type this)
-
-### 5.1 Class header + type hint for drivetrain (SIM version)
-
-Type:
-
-```python
-class DriveBoxAuto:
-    swerve: SwerveDriveSim
-```
-
-✅ This tells MagicBot:
-
-* “This autonomous routine will use the robot’s swerve drive component.”
-
-**Later (real robot):**
-Change to:
-
-```python
-from ..components.swerve_drive_real import SwerveDriveReal
 
 class DriveBoxAuto:
-    swerve: SwerveDriveReal
-```
+    MODE_NAME = "Drive Box (SIM)"
+    DEFAULT = True
 
----
+    def __init__(self):
+        # This will be filled in by robot.py (we do that in robotInit)
+        self.robot = None
 
-### 5.2 `on_enable()` — runs once when Auto starts
-
-Type:
-
-```python
-    def on_enable(self):
         self.timer = wpilib.Timer()
+        self.state = "FORWARD_1"
+
+    def on_enable(self):
         self.timer.restart()
         self.state = "FORWARD_1"
-```
 
-What this does:
-
-* makes a timer
-* starts it at 0
-* sets the first state
-
----
-
-### 5.3 `execute()` — runs repeatedly during Auto
-
-Type:
-
-```python
-    def execute(self):
+    def on_iteration(self, time_elapsed: float):
+        # We will use our own timer because it’s easier for beginners to reset per step
         t = self.timer.get()
 
+        # Safety: if robot isn’t attached yet, do nothing
+        if self.robot is None:
+            return
+
+        # A simple "state machine" auto:
+        # forward -> left -> forward -> stop
         if self.state == "FORWARD_1":
-            # Drive forward for 1.5 seconds
-            self.swerve.drive(1.0, 0.0, 0.0)  # 1 m/s forward
+            self.robot.swerve.drive(1.0, 0.0, 0.0)  # 1 m/s forward
             if t > 1.5:
                 self.state = "LEFT"
                 self.timer.restart()
 
         elif self.state == "LEFT":
-            # Strafe left for 1.0 seconds
-            self.swerve.drive(0.0, 1.0, 0.0)  # 1 m/s left
+            self.robot.swerve.drive(0.0, 1.0, 0.0)  # 1 m/s left
             if t > 1.0:
                 self.state = "FORWARD_2"
                 self.timer.restart()
 
         elif self.state == "FORWARD_2":
-            # Drive forward for 1.0 seconds
-            self.swerve.drive(1.0, 0.0, 0.0)
+            self.robot.swerve.drive(1.0, 0.0, 0.0)
             if t > 1.0:
                 self.state = "DONE"
 
         else:
-            # DONE: stop the robot
-            self.swerve.drive(0.0, 0.0, 0.0)
+            # DONE state: stop
+            self.robot.swerve.drive(0.0, 0.0, 0.0)
+
+    def on_disable(self):
+        if self.robot is not None:
+            self.robot.swerve.drive(0.0, 0.0, 0.0)
 ```
 
-✅ This creates a simple path:
-Forward → Left → Forward → Stop
+### Why we use `self.robot.swerve` instead of `swerve: SwerveDriveSim` here
+
+In some setups, injecting components directly into autonomous mode classes can be confusing or fail for beginners.
+
+So we use a simpler rule:
+
+✅ The robot always has the drivetrain at `robot.swerve`
+✅ Autonomous modes get a reference to the robot (`mode.robot = robot`)
+✅ Then autos can call `self.robot.swerve.drive(...)`
+
+To make that happen, we must update `robot.py`.
 
 ---
 
-## 6) Why this works in the simulator right away
+## 3) Update `robot.py` so autonomous modes get a robot reference
 
-In your simulator setup:
+This is the missing piece that makes `self.robot` stop being `None`.
 
-* `robot.py` calls `swerve.drive(...)` for Teleop
-* In Auto, this autonomous class calls `swerve.drive(...)` instead
+### 3.1 Keep your normal drivetrain component annotation
 
-`physics.py` reads `swerve.last_cmd` and moves the robot pose.
-
-So as long as:
-
-* your `SwerveDriveSim` stores `last_cmd`
-* and `execute()` is being called
-
-you’ll see the robot move.
-
----
-
-# PART 2 — Distance-based Auto (More consistent)
-
-Time-based is good for learning.
-Distance-based is what teams prefer for real matches.
-
-To do distance-based auto, you need to measure distance.
-
----
-
-## 7) The simplest way to measure distance in SIM
-
-In sim, we already track a robot pose in `physics.py` and publish it to Field2d.
-
-For distance-based auto, we want the drivetrain to provide:
+Do NOT remove this from `robot.py`:
 
 ```python
-def get_pose(self) -> Pose2d:
-    ...
+class MyRobot(magicbot.MagicRobot):
+    swerve: SwerveDriveSim
 ```
-You will need to create and 
-provide this method inside SwerveDriveSim/SwerveDriveReal
-### What students should understand
 
-* Pose = (x meters, y meters, heading)
-* If we know pose at start and pose now, we can compute distance moved.
+This is still correct and should remain.
 
 ---
 
-## 8) How to compute distance moved
+### 3.2 Add `robotInit` + `_attach_robot_to_auto_modes`
 
-If:
-
-* start pose is `(x0, y0)`
-* current pose is `(x1, y1)`
-
-Distance moved is:
+Inside your `MyRobot` class (in `robot.py`), add:
 
 ```python
-dx = x1 - x0
-dy = y1 - y0
-dist = sqrt(dx*dx + dy*dy)
+import wpilib
+import magicbot
+
+class MyRobot(magicbot.MagicRobot):
+    # keep your existing component annotations
+    # swerve: SwerveDriveSim
+
+    def robotInit(self):
+        super().robotInit()
+        self._attach_robot_to_auto_modes()
+
+    def _attach_robot_to_auto_modes(self):
+        """
+        Give each autonomous mode a reference to this robot instance.
+        This allows autonomous code to call:
+            self.robot.swerve.drive(...)
+        """
+        selector = getattr(self, "_automodes", None)
+        if selector is None:
+            selector = getattr(self, "autonomous", None)
+
+        if selector is None:
+            wpilib.reportWarning("No autonomous selector found; cannot attach robot to auto modes")
+            return
+
+        modes = getattr(selector, "modes", None)
+        if not isinstance(modes, dict) or not modes:
+            wpilib.reportWarning("Autonomous selector has no modes (did you create autonomous/__init__.py?)")
+            return
+
+        for mode in modes.values():
+            mode.robot = self
+
+        wpilib.reportWarning(f"Attached robot reference to {len(modes)} autonomous mode(s)")
 ```
+
+### Why `robotInit`?
+
+`robotInit()` runs once at robot startup (SIM and real robot).
+By calling `_attach_robot_to_auto_modes()` there, we guarantee the autonomous classes get `mode.robot = self` before Auto starts.
+
+✅ This works in SIM
+✅ This also works on the real robot (the same robot lifecycle exists on the roboRIO)
 
 ---
 
-## 9) Distance-based version of the same state machine
+## 4) How to run Autonomous in the simulator (student checklist)
 
-### 9.1 Store “step start pose” when entering a state
+### Step 1 — Start simulation
 
-In `on_enable()`:
-
-```python
-    def on_enable(self):
-        self.state = "FORWARD_1"
-        self.step_start_pose = self.swerve.get_pose()
-```
-
-### 9.2 In execute, drive until distance is reached
-
-Example for forward 2.0 meters:
-
-```python
-        if self.state == "FORWARD_1":
-            self.swerve.drive(1.0, 0.0, 0.0)
-
-            current = self.swerve.get_pose()
-            start = self.step_start_pose
-
-            dx = current.X() - start.X()
-            dy = current.Y() - start.Y()
-            dist = (dx*dx + dy*dy) ** 0.5
-
-            if dist >= 2.0:
-                self.state = "LEFT"
-                self.step_start_pose = self.swerve.get_pose()
-```
-
-Then for LEFT 1.0 meter:
-
-```python
-        elif self.state == "LEFT":
-            self.swerve.drive(0.0, 1.0, 0.0)
-
-            current = self.swerve.get_pose()
-            start = self.step_start_pose
-
-            dx = current.X() - start.X()
-            dy = current.Y() - start.Y()
-            dist = (dx*dx + dy*dy) ** 0.5
-
-            if dist >= 1.0:
-                self.state = "FORWARD_2"
-                self.step_start_pose = self.swerve.get_pose()
-```
-
-And forward 1.0 again, then DONE.
-
-✅ This produces repeatable movement based on meters, not seconds.
-
----
-
-# PART 3 — What kinds of Autonomous “states” can you build?
-
-A state machine becomes powerful when each state has:
-
-* a clear job
-* a clear “done condition”
-
-Here are common state types:
-
-## A) Drive-to-distance state
-
-* ends when distance >= target
-
-## B) Turn-to-angle state
-
-* ends when yaw error is small
-  (use navX in real robot, simple gyro in sim)
-
-## C) Wait state
-
-* ends when timer >= target
-  (useful to pause before shooting)
-
-## D) Align-to-target state (Limelight / AprilTags)
-
-* ends when tx error is small (target centered)
-
-## E) Action state (shooter/intake)
-
-* ends when you’ve fired a ball or reached shooter RPM
-
----
-
-# PART 4 — “Maximizing points in Auto” (what students should focus on)
-
-Even without knowing every detail, students should understand this general strategy:
-
-### In Auto, you want:
-
-✅ something consistent
-✅ something safe
-✅ something that helps the alliance
-
-Examples of early-season “high value” auto goals:
-
-* leave the starting area reliably
-* reach a scoring spot reliably
-* align to an AprilTag quickly
-* score one game piece reliably
-
-Later, more advanced:
-
-* score multiple pieces
-* do an auto-climb / auto-task
-* coordinate with alliance partners
-
-**Key beginner message:**
-
-> Consistency beats fancy. A simple auto that works every match is better than a complex one that fails.
-
----
-
-# PART 5 — Running Autonomous in SIM
-
-1. Start simulation:
+In your terminal (from the project folder), run:
 
 ```bash
 robotpy sim
 ```
 
-2. Use the sim GUI to:
+Leave it running.
 
-* set robot mode to Autonomous
-* enable
+### Step 2 — Open the sim GUI (halsim_gui window)
 
-3. Watch Field2d:
+You should see:
 
-* robot should move in your forward-left-forward path
+* Robot State controls
+* An **AutonomousMode** chooser
 
-If it doesn’t:
+### Step 3 — Select the autonomous mode
 
-* check the sim output log for autonomous package loading messages
-* confirm your `autonomous/` folder exists and has `__init__.py`
+In the GUI, find **AutonomousMode** and select:
 
----
+* `Drive Box (SIM)`
 
-# PART 6 — What changes for the real robot?
+If you only see “None”:
 
-When moving from SIM to real robot:
+* confirm `RobotMain/autonomous/__init__.py` exists
+* confirm your class has `MODE_NAME = "..."` (no `: str`)
+* restart the sim after edits
 
-## In your autonomous class:
+### Step 4 — Enable Autonomous
 
-Change:
+In the GUI:
 
-```python
-swerve: SwerveDriveSim
-```
+* set robot mode to **Autonomous**
+* click **Enable**
 
-to:
+### Step 5 — Confirm it’s working
 
-```python
-swerve: SwerveDriveReal
-```
+You should see the robot:
 
-## For distance-based auto:
+* drive forward
+* strafe left
+* drive forward
+* stop
 
-* SIM pose might come from physics/Field2d
-* REAL pose should come from **odometry**:
+If nothing moves:
 
-  * wheel encoder distances
-  * gyro yaw
-  * (optionally) AprilTag vision pose estimates
+* check sim output logs
+* confirm you added `robotInit()` + `_attach_robot_to_auto_modes()` in `robot.py`
+* confirm you see a warning like:
 
-But the state machine logic stays the same:
-
-* start pose
-* drive until distance reached
-* switch states
+  * “Attached robot reference to X autonomous mode(s)”
 
 ---
 
-## Final reminder
+## 5) Common mistakes (and what they look like)
 
-Autonomous is just “driving without the driver”.
+### “AutonomousMode only shows None”
 
-If you can:
+Usually means:
 
-* command a drivetrain
-* measure when you’ve reached a goal
-* switch steps
+* missing `autonomous/__init__.py`
+* missing `MODE_NAME`
+* import error in the autonomous file
 
-You can build any auto routine you want.
+### “No autonomous modes selected”
+
+Means:
+
+* the dropdown is still “None”
+* select your auto mode in the GUI
+
+### `self.robot is None` inside autonomous
+
+Means:
+
+* you did not attach the robot reference in `robotInit`
+* or the attach code didn’t find any modes (package not loaded)
+
+---
+
+## 6) Will this work on the real robot later?
+
+✅ Yes, the same structure works:
+
+* `robotInit` runs on the roboRIO
+* autonomous modes still exist
+* attaching `mode.robot = self` still works
+* Auto runs the same way (just no sim GUI; Driver Station enables Auto)
+
+What changes on real robot:
+
+* `robot.swerve` will be your **real swerve component**, not the sim one
+* motor commands go to hardware instead of physics simulation
+
+What stays the same:
+
+* the autonomous state machine logic
+* the method names (`on_enable`, `on_iteration`, `on_disable`)
+* selecting which auto to run (in real matches you typically set a default or use DS/dashboard chooser)
+
+---
+
+## 7) What students should do next
+
+Once this works:
+
+* create a second auto file (example: only drive forward)
+* change times and see behavior
+* add new states (turn, wait, etc.)
+* practice debugging with print statements or SmartDashboard
+
+Time-based autos are a perfect training tool before learning distance-based autos.
 

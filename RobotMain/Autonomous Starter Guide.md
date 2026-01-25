@@ -127,7 +127,7 @@ At the top:
 ```python
 import wpilib
 
-from components.swerve_drive_sim import SwerveDriveSim
+from ..components.swerve_drive_sim import SwerveDriveSim
 ```
 
 Why import `SwerveDriveSim`?
@@ -154,7 +154,7 @@ class DriveBoxAuto:
 Change to:
 
 ```python
-from components.swerve_drive_real import SwerveDriveReal
+from ..components.swerve_drive_real import SwerveDriveReal
 
 class DriveBoxAuto:
     swerve: SwerveDriveReal
@@ -256,7 +256,8 @@ For distance-based auto, we want the drivetrain to provide:
 def get_pose(self) -> Pose2d:
     ...
 ```
-
+You will need to create and 
+provide this method inside SwerveDriveSim/SwerveDriveReal
 ### What students should understand
 
 * Pose = (x meters, y meters, heading)

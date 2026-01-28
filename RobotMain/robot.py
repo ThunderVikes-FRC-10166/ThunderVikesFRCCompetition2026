@@ -1,7 +1,11 @@
 import magicbot
 import wpilib
+import math
 
-# ------------------------------------------------------------------------------
+# from RobotMain.samples.samplecomponentusage import MyRobot
+from components.swerve_drive_sim import SwerveDriveSim
+# ----------------------
+# --------------------------------------------------------
 #  MagicBot Overview
 # ------------------------------------------------------------------------------
 # MagicBot is a framework built on top of WPILib that helps FRC teams organize
@@ -19,9 +23,14 @@ import wpilib
 #
 # Students will fill these methods with real robot code as the robot develops.
 # ------------------------------------------------------------------------------
+def deadband(x: float, db: float = 0.08) -> float:
+    return 0.0 if abs(x) < db else x
+
+
 
 
 class MyRobot(magicbot.MagicRobot):
+    swerve: SwerveDriveSim
     """
     This class represents your entire robot program.
 
@@ -38,6 +47,7 @@ class MyRobot(magicbot.MagicRobot):
     # createObjects()
     # --------------------------------------------------------------------------
     def createObjects(self):
+        self.driver = wpilib.XboxController(0)
         """
         This method is called ONCE when the robot boots.
 
@@ -91,7 +101,27 @@ class MyRobot(magicbot.MagicRobot):
     # teleopPeriodic()
     # --------------------------------------------------------------------------
     def teleopPeriodic(self):
-        """
+
+        x = -self.driver.getLeftY() #Forward/back
+        y = -self.driver.getLeftX() # strafe
+        rot = -self.driver.getRightX() #rotate
+        x = deadband(x)
+        y = deadband(y)
+        rot = deadband(rot)
+
+        x = math.copysign(x * x, x)
+        y = math.copysign(y * y, y)
+        rot = math.copysign(rot * rot, rot)
+        vx = x * self.swerve.max_speed_mps
+        vy = y * self.swerve.max_speed_mps
+        omega = rot * self.swerve.max_omega_radps
+
+        self.swerve.drive(vx, vy, omega)
+
+if __name__ == "__main__":
+    wpilib.run(MyRobot)
+
+    """
         This method runs REPEATEDLY during Teleop (about 50 times per second).
 
         This is where you:
@@ -113,4 +143,4 @@ class MyRobot(magicbot.MagicRobot):
 
         For now, this is empty until hardware and components are added.
         """
-        pass
+    pass

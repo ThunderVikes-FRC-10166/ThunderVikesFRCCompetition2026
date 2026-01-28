@@ -1,7 +1,7 @@
 import magicbot
 import wpilib
 import math
-
+from ntcore import NetworkTableInstance
 # from RobotMain.samples.samplecomponentusage import MyRobot
 from components.swerve_drive_sim import SwerveDriveSim
 # ----------------------
@@ -48,6 +48,7 @@ class MyRobot(magicbot.MagicRobot):
     # --------------------------------------------------------------------------
     def createObjects(self):
         self.driver = wpilib.XboxController(0)
+        self.ll = NetworkTableInstance.getDefault().getTable("limelight")
         """
         This method is called ONCE when the robot boots.
 
@@ -117,6 +118,13 @@ class MyRobot(magicbot.MagicRobot):
         omega = rot * self.swerve.max_omega_radps
 
         self.swerve.drive(vx, vy, omega)
+
+        tv = self.ll.getNumber("tv", 0)
+        if tv >= 1:
+            tid = int(self.ll.getNumber("tid", -1))
+            tx = self.ll.getNumber("tx", 0.0)
+            botpose = self.ll.getNumberArray("botpose_wpiblue", [])
+            print(f"[robot] sees tag tid={tid} tx={tx:.1f} botpose={botpose}")
 
 if __name__ == "__main__":
     wpilib.run(MyRobot)

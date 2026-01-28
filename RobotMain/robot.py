@@ -42,7 +42,33 @@ class MyRobot(magicbot.MagicRobot):
 
     You will expand this class as your robot gains motors, sensors, and features.
     """
+    def robotInit(self):
+        super().robotInit()
+        self._attach_robot_to_auto_modes()
 
+    def _attach_robot_to_auto_modes(self):
+        """
+        Give each autonomous mode a reference to this robot instance.
+        This allows autonomous code to call:
+            self.robot.swerve.drive(...)
+        """
+        selector = getattr(self, "_automodes", None)
+        if selector is None:
+            selector = getattr(self, "autonomous", None)
+
+        if selector is None:
+            wpilib.reportWarning("No autonomous selector found; cannot attach robot to auto modes")
+            return
+
+        modes = getattr(selector, "modes", None)
+        if not isinstance(modes, dict) or not modes:
+            wpilib.reportWarning("Autonomous selector has no modes (did you create autonomous/__init__.py?")
+            return
+
+        for mode in modes.values():
+            mode.robot = self
+
+        wpilib.reportWarning(f"Attached robot reference to {len(modes)} autonomous mode(s)")
     # --------------------------------------------------------------------------
     # createObjects()
     # --------------------------------------------------------------------------

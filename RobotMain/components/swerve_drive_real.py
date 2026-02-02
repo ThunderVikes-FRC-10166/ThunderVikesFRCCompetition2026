@@ -135,3 +135,4 @@ class SwerveDrive:
 
         # Simple timestamp correction using Limelight Pipeline latency (ms)
         latency_ms = self.ll_table.getNumber("tl", 0.0)
+        timestamp_ms = wpilib.Timer.getFPGATimestamp() - (latency_ms / 1000.0)

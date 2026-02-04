@@ -23,7 +23,7 @@ class SwerveModule:
 
         # --- Physical Constants (edit for your robot) ---
         self.wheel_diameter_m = 0.0762 # 3 inches in meters
-        self,drive_gear_ratio = 5.08 #Medium MAXSwerve (motor rotation per wheel rotation)
+        self.drive_gear_ratio = 5.08 #Medium MAXSwerve (motor rotation per wheel rotation)
 
         # Absolute encoder offset (radians)
         # Meaning: when wheel is pointing FORWARD, we want angle = 0 rad.
@@ -105,7 +105,7 @@ class SwerveModule:
         output = self.turn_pid.calculate(current, self.target_angle_rad)
 
         # Clamp voltage so we don't slam the turn motor
-        if output > self.maxt_turn_volts:
+        if output > self.max_turn_volts:
             output = self.max_turn_volts
         elif output < -self.max_turn_volts:
             output = -self.max_turn_volts
@@ -116,12 +116,37 @@ class SwerveModule:
         self.apply_drive()
         self.apply_turn()
 
-    
+        # Debug info so students can see what's happening
+        wpilib.SmartDashboard.putNumber(
+           "swerve/abs_angle_deg",
+           math.degrees(self.get_abs_angle_rad())
+       )
+        wpilib.SmartDashboard.putNumber(
+            "swerve/target_angle_deg",
+            math.degrees(self.target_angle_rad)
+        )
+        wpilib.SmartDashboard.putNumber(
+            "swerve/target_speed_mps",
+            self.target_speed_mps
+        )
+    def get_state(self) -> SwerveModuleState:
+        # Current wheel speed from drive encoder (m/s)
+        speed_mps = self.drive_encoder.getVelocity()
 
+        # Current wheel angle from absolute encoder
+        angle = Rotation2d(self.get_abs_angle_rad())
+        return SwerveModuleState(speed_mps, angle)
+    def get_position (self) -> SwerveModulePosition:
+        #Total distances traveled by the wheels (meters)
+        distance_m = self.drive_encoder.getPosition()
 
-    def wps_to_motor_rpm(self, speed_mps: float) -> float:
-        wheel_circumference = math.pi * self.wheel_diameter_m
-        wheel_rps = speed_mps / wheel_circumference
-        wheel_spm = wheel_rps * 60.0
-        motor_rpm = wheel_rpm = self.drive_gear_ratio
-        return motor_rpm
+        # Current wheel angle
+        angle = Rotation2d(self.get_abs_angle_rad())
+
+        return SwerveModulePosition(distance_m, angle)
+    def reset_drive_distance(self) -> None:
+        # Reset the drive encoder to 0 meters
+        self.drive_encoder.setPosition(0.0)
+
+        # Start by holding the current angle so it doesn't jump on enable
+        self.target_angle_rad = self.get_abs_angle_rad()

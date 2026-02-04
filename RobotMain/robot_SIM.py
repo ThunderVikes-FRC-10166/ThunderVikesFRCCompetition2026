@@ -2,10 +2,8 @@ import magicbot
 import wpilib
 import math
 from ntcore import NetworkTableInstance
-import rev
 # from RobotMain.samples.samplecomponentusage import MyRobot
-from components.swerve_drive_real import SwerveDrive
-from components.swerve_drive_module import SwerveModule
+from components.swerve_drive_sim import SwerveDriveSim
 # ----------------------
 # --------------------------------------------------------
 #  MagicBot Overview
@@ -32,7 +30,7 @@ def deadband(x: float, db: float = 0.08) -> float:
 
 
 class MyRobot(magicbot.MagicRobot):
-    swerve: SwerveDrive
+    swerve: SwerveDriveSim
     """
     This class represents your entire robot program.
 
@@ -77,53 +75,6 @@ class MyRobot(magicbot.MagicRobot):
     def createObjects(self):
         self.driver = wpilib.XboxController(0)
         self.ll = NetworkTableInstance.getDefault().getTable("limelight")
-
-        #----------------------------------
-        #Driver Scaling constants
-        #----------------------------------
-        #These are "how fast should the robot be allowed to go"
-        # Students can tune these later
-        self.max_speed_mps = 4.5 # typical swerve top speed
-        self.max_omega_radps = 2.5 * math.pi  # about 1.25 rotations/sec
-
-        #----------------------------
-        # CREATE HARDWARE for ALL 4 modules
-        #----------------------------
-        # Replace CAN IDs and DIO channels with YOUR real
-        #
-        # CAN IDs (example):
-        # drive motors: 1,2,3,4
-        # turn motors: 5,6,7,8
-        #
-        # DIO ports (example):
-        #  abs encoders: 0,1,2,3
-        #
-        # IMPORTANT: Spark MAX motor type for NEO/NEO550 is Brushless.
-        motor_type = rev.SparkLowLevel.MotorType.KBrushless
-
-        # ----- Front left (fl) ---
-        self.fl_drive_motor = rev.SparkMax(1, motor_type)
-        self.fl_turn_motor  = rev.SparkMax(5, motor_type)
-        self.fl_abs_encoder = wpilib.DutyCycleEncoder(0)
-
-        # ----- Front Right (Fr) ------
-        self.fr_drive_motor = rev.SparkMax(2, motor_type)
-        self.fr_turn_motor  = rev.SparkMax(6, motor_type)
-        self.fr_abs_encoder = wpilib.DutyCycleEncoder(1)
-
-        # ------ Back Left (bl) ---
-        self.bl_drive_motor = rev.SparkMax(3, motor_type)
-        self.bl_turn_motor  = rev.SparkMax(7, motor_type)
-        self.bl_abs_encoder = wpilib.DutyCycleEncoder(2)
-
-        # ---- Back Right (br) ---
-        self.br_drive_motor = rev.SparkMax(4, motor_type)
-        self.br_turn_motor = rev.SparkMax(8, motor_type)
-        self.br_abs_encoder = wpilib.DutyCycleEncoder(3)
-
-
-
-
         """
         This method is called ONCE when the robot boots.
 

@@ -102,23 +102,23 @@ class MyRobot(magicbot.MagicRobot):
         motor_type = rev.SparkLowLevel.MotorType.KBrushless
 
         # ----- Front left (fl) ---
-        self.fl_drive_motor = rev.SparkMax(1, motor_type)
-        self.fl_turn_motor  = rev.SparkMax(5, motor_type)
+        self.fl_drive_motor = rev.SparkMax(20, motor_type)
+        self.fl_turn_motor  = rev.SparkMax(21, motor_type)
         self.fl_abs_encoder = wpilib.DutyCycleEncoder(0)
 
         # ----- Front Right (Fr) ------
-        self.fr_drive_motor = rev.SparkMax(2, motor_type)
-        self.fr_turn_motor  = rev.SparkMax(6, motor_type)
+        self.fr_drive_motor = rev.SparkMax(17, motor_type)
+        self.fr_turn_motor  = rev.SparkMax(23, motor_type)
         self.fr_abs_encoder = wpilib.DutyCycleEncoder(1)
 
         # ------ Back Left (bl) ---
-        self.bl_drive_motor = rev.SparkMax(3, motor_type)
-        self.bl_turn_motor  = rev.SparkMax(7, motor_type)
+        self.bl_drive_motor = rev.SparkMax(18, motor_type)
+        self.bl_turn_motor  = rev.SparkMax(22, motor_type)
         self.bl_abs_encoder = wpilib.DutyCycleEncoder(2)
 
         # ---- Back Right (br) ---
-        self.br_drive_motor = rev.SparkMax(4, motor_type)
-        self.br_turn_motor = rev.SparkMax(8, motor_type)
+        self.br_drive_motor = rev.SparkMax(19, motor_type)
+        self.br_turn_motor = rev.SparkMax(24, motor_type)
         self.br_abs_encoder = wpilib.DutyCycleEncoder(3)
 
 

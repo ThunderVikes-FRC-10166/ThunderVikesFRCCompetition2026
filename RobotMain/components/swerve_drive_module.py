@@ -33,7 +33,7 @@ class SwerveModule:
         #---Rev sensors/controllers ---
         self.drive_encoder = self.drive_motor.getEncoder()
 
-        wheel_circumference_m = math.pi & self.wheel_diameter_m
+        wheel_circumference_m = math.pi * self.wheel_diameter_m
          # 1 motor rotation -> (1/gear_ratio) wheel rotations -> meters traveled
         self.meter_per_motor_rotation = wheel_circumference_m / self.drive_gear_ratio
 
@@ -42,13 +42,13 @@ class SwerveModule:
 
         # Tell spark MAX encoder to report meter and m/s directly
         cfg = rev.SparkMaxConfig()
-        cfg.encoder.postionConversionFactor(self.meter_per_motor_roation)
-        cfg.encoder.velocityConverionFactor(self.meter_per_second_per_rpm)
+        cfg.encoder.positionConversionFactor(self.meter_per_motor_rotation)
+        cfg.encoder.velocityConversionFactor(self.meter_per_second_per_rpm)
 
         self.drive_motor.configure(
             cfg,
             rev.ResetMode.kResetSafeParameters,
-            rev.PersisMode.kPersistSafeParameters
+            rev.PersistMode.kPersistParameters
         )
 
         # Closed-loop controller for drive velocity
@@ -113,8 +113,8 @@ class SwerveModule:
         self.turn_motor.setVoltage(output)
     def execute(self) -> None:
         # Apply drive and turn outputs using the targets from set()
-        self.apply_drive()
-        self.apply_turn()
+        self._apply_drive()
+        self._apply_turn()
 
         # Debug info so students can see what's happening
         wpilib.SmartDashboard.putNumber(

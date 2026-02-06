@@ -8,7 +8,7 @@ from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 from wpimath.estimator import SwerveDrive4PoseEstimator
 
-from RobotMain.components.swervemodule import SwerveModule
+from RobotMain.components.swerve_drive_module import SwerveModule
 
 class SwerveDrive:
     #MagicBot injects these from robot.py createObjects()

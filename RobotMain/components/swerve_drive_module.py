@@ -16,8 +16,8 @@ def wrap_to_pi(rad: float) -> float:
 
 class SwerveModule:
     # magicBot will inject these from robot.py createObjects()
-    drive_motor: rev.Sparkmax
-    turn_motor: rev.Sparkmax
+    drive_motor: rev.SparkFlex
+    turn_motor: rev.SparkMax
     abs_encoder: wpilib.DutyCycleEncoder
     def setup(self) -> None:
 
@@ -41,7 +41,7 @@ class SwerveModule:
         self.meter_per_second_per_rpm = self.meter_per_motor_rotation / 60.0
 
         # Tell spark MAX encoder to report meter and m/s directly
-        cfg = rev.SparkMaxConfig()
+        cfg = rev.SparkFlexConfig()
         cfg.encoder.positionConversionFactor(self.meter_per_motor_rotation)
         cfg.encoder.velocityConversionFactor(self.meter_per_second_per_rpm)
 

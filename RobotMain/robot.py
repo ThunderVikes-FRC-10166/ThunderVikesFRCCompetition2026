@@ -4,8 +4,8 @@ import math
 from ntcore import NetworkTableInstance
 import rev
 # from RobotMain.samples.samplecomponentusage import MyRobot
-from components.swerve_drive_real import SwerveDrive
-from components.swerve_drive_module import SwerveModule
+from .components.swerve_drive_real import SwerveDrive
+from .components.swerve_drive_module import SwerveModule
 # ----------------------
 # --------------------------------------------------------
 #  MagicBot Overview
@@ -99,7 +99,7 @@ class MyRobot(magicbot.MagicRobot):
         #  abs encoders: 0,1,2,3
         #
         # IMPORTANT: Spark MAX motor type for NEO/NEO550 is Brushless.
-        motor_type = rev.SparkLowLevel.MotorType.KBrushless
+        motor_type = rev.SparkLowLevel.MotorType.kBrushless
 
         # ----- Front left (fl) ---
         self.fl_drive_motor = rev.SparkFlex(20, motor_type)

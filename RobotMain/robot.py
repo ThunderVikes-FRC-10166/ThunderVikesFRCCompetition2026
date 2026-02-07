@@ -34,7 +34,12 @@ def deadband(x: float, db: float = 0.08) -> float:
 
 
 class MyRobot(magicbot.MagicRobot):
+    fl: SwerveModule
+    fr: SwerveModule
+    bl: SwerveModule
+    br: SwerveModule
     swerve: SwerveDrive
+
     """
     This class represents your entire robot program.
 
@@ -190,9 +195,12 @@ class MyRobot(magicbot.MagicRobot):
         x = math.copysign(x * x, x)
         y = math.copysign(y * y, y)
         rot = math.copysign(rot * rot, rot)
-        vx = x * self.swerve.max_speed_mps
-        vy = y * self.swerve.max_speed_mps
-        omega = rot * self.swerve.max_omega_radps
+        vx = x * self.max_speed_mps
+        vy = y * self.max_speed_mps
+        omega = rot * self.max_omega_radps
+        wpilib.SmartDashboard.putNumber("Vx",vx)
+        wpilib.SmartDashboard.putNumber("vy",vy)
+        wpilib.SmartDashboard.putNumber("omega",omega)
 
         self.swerve.drive(vx, vy, omega)
 

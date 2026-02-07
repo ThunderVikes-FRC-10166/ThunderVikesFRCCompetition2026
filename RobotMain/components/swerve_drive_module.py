@@ -19,6 +19,7 @@ class SwerveModule:
     drive_motor: rev.SparkFlex
     turn_motor: rev.SparkMax
     abs_encoder: wpilib.DutyCycleEncoder
+
     def setup(self) -> None:
 
         # --- Physical Constants (edit for your robot) ---
@@ -32,6 +33,8 @@ class SwerveModule:
         self.abs_offset_rad = 0.0 # TODO: measure per module and set robot in constants
         #---Rev sensors/controllers ---
         self.drive_encoder = self.drive_motor.getEncoder()
+
+
 
         wheel_circumference_m = math.pi * self.wheel_diameter_m
          # 1 motor rotation -> (1/gear_ratio) wheel rotations -> meters traveled
@@ -70,12 +73,15 @@ class SwerveModule:
 
     def get_abs_angle_rad(self) -> float:
         # DutyCycleEncoder gives 0.0..1.0 for one full rotation
-        turns_0_to_1 = self.abs_encoder.getAbsolutePosition()
-        raw_rad = turns_0_to_1 * 2.0 * math.pi
+        try:
+            turns_0_to_1 = self.abs_encoder.getAbsolutePosition()
+            raw_rad = turns_0_to_1 * 2.0 * math.pi
 
-        # Apply offset so 'forward' becomes 0 rad
-        adjusted = raw_rad - self.abs_offset_rad
-        return wrap_to_pi(adjusted)
+            # Apply offset so 'forward' becomes 0 rad
+            adjusted = raw_rad - self.abs_offset_rad
+            return wrap_to_pi(adjusted)
+        except Exception as e:
+            return wrap_to_pi(0)
 
     def set(self, speed_mps: float, angle_rad: float) -> None:
         # Create a desired state using WPILib types
@@ -103,12 +109,14 @@ class SwerveModule:
 
         #PID output is a "turn effort" to match the target angle
         output = self.turn_pid.calculate(current, self.target_angle_rad)
-
+        if current == self.target_angle_rad:
+            output = 0.0
         # Clamp voltage so we don't slam the turn motor
         if output > self.max_turn_volts:
             output = self.max_turn_volts
         elif output < -self.max_turn_volts:
             output = -self.max_turn_volts
+
 
         self.turn_motor.setVoltage(output)
     def execute(self) -> None:
@@ -138,12 +146,20 @@ class SwerveModule:
         return SwerveModuleState(speed_mps, angle)
     def get_position (self) -> SwerveModulePosition:
         #Total distances traveled by the wheels (meters)
-        distance_m = self.drive_encoder.getPosition()
+        try:
+            distance_m = self.drive_encoder.getPosition()
 
-        # Current wheel angle
-        angle = Rotation2d(self.get_abs_angle_rad())
+            # Current wheel angle
+            angle = Rotation2d(self.get_abs_angle_rad())
+            return SwerveModulePosition(distance_m, angle)
+        except Exception as e:
+            error = "Value of drive encoder: {}".format( self.drive_motor.getEncoder())
+            wpilib.reportError(error, False)
+            error_2 = "Value of drive motor: {}".format(self.drive_motor)
+            wpilib.reportError(error_2, False)
+            return SwerveModulePosition(0.0, 0.0)
 
-        return SwerveModulePosition(distance_m, angle)
+
     def reset_drive_distance(self) -> None:
         # Reset the drive encoder to 0 meters
         self.drive_encoder.setPosition(0.0)

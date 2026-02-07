@@ -7,7 +7,7 @@ import navx
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 from wpimath.estimator import SwerveDrive4PoseEstimator
-from RobotMain.components.swerve_drive_module import SwerveModule
+from .swerve_drive_module import SwerveModule
 
 class SwerveDrive:
     #MagicBot injects these from robot.py createObjects()
@@ -76,6 +76,7 @@ class SwerveDrive:
         return Rotation2d.fromDegrees(yaw_deg)
 
     def get_module_positions(self):
+
         return (
             self.fl.get_position(),
             self.fr.get_position(),
@@ -91,7 +92,8 @@ class SwerveDrive:
     def _get_robot_relative_speeds(self) -> ChassisSpeeds:
         # Convert FIELD commands to ROBOT commands using gyro yaw.
         # this makes joystick forward always mean field forward.
-        return ChassisSpeeds.fromFIeldRelativeSpeeds(
+        wpilib.SmartDashboard.putNumber("navx yaw", self.get_yaw().radians())
+        return ChassisSpeeds.fromFieldRelativeSpeeds(
             self.cmd_vx,
             self.cmd_vy,
             self.cmd_omega,
@@ -156,8 +158,9 @@ class SwerveDrive:
 
     def execute(self) -> None:
         # 1) Convert field commands -> module states
-        states = self.compute_module_states()
-
+        states = self._compute_module_states()
+        wpilib.SmartDashboard.putNumber("fl speed", states[0].speed)
+        wpilib.SmartDashboard.putNumber("fl angle", states[0].angle.radians())
         # 2) tell modules what to do
         self._apply_states(states)
 

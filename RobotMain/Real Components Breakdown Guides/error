@@ -1,0 +1,17 @@
+﻿﻿﻿﻿﻿﻿     ~~~~~~~~~~~~~~^^ ﻿
+﻿﻿﻿﻿﻿﻿   File "/home/lvuser/py/robot.py", line 48, in robotInit ﻿
+﻿﻿﻿﻿﻿﻿     super().robotInit() ﻿
+﻿﻿﻿﻿﻿﻿     ~~~~~~~~~~~~~~~~~^^ ﻿
+﻿﻿﻿﻿﻿﻿   File "/usr/local/lib/python3.14/site-packages/magicbot/magicrobot.py", line 114, in robotInit ﻿
+﻿﻿﻿﻿﻿﻿     self._create_components() ﻿
+﻿﻿﻿﻿﻿﻿     ~~~~~~~~~~~~~~~~~~~~~~~^^ ﻿
+﻿﻿﻿﻿﻿﻿   File "/usr/local/lib/python3.14/site-packages/magicbot/magicrobot.py", line 627, in _create_components ﻿
+﻿﻿﻿﻿﻿﻿     self._setup_vars(cname, component, injectables) ﻿
+﻿﻿﻿﻿﻿﻿     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ﻿
+﻿﻿﻿﻿﻿﻿   File "/usr/local/lib/python3.14/site-packages/magicbot/magicrobot.py", line 710, in _setup_vars ﻿
+﻿﻿﻿﻿﻿﻿     injections = find_injections(requests, injectables, cname) ﻿
+﻿﻿﻿﻿﻿﻿   File "/usr/local/lib/python3.14/site-packages/magicbot/inject.py", line 75, in find_injections ﻿
+﻿﻿﻿﻿﻿﻿     raise MagicInjectError( ﻿
+﻿﻿﻿﻿﻿﻿         f"Component {cname} has variable {n} (type {inject_type}), which is absent from robot" ﻿
+﻿﻿﻿﻿﻿﻿     ) ﻿
+﻿﻿﻿﻿﻿﻿ magicbot.inject.MagicInjectError: Component swerve has variable fl (type <class 'components.swerve_drive_module.SwerveModule'>), which is absent from robot ﻿

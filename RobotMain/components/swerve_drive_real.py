@@ -7,8 +7,7 @@ import navx
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
 from wpimath.estimator import SwerveDrive4PoseEstimator
-
-from RobotMain.components.swervemodule import SwerveModule
+from .swerve_drive_module import SwerveModule
 
 class SwerveDrive:
     #MagicBot injects these from robot.py createObjects()
@@ -139,38 +138,37 @@ class SwerveDrive:
 
         self.pose_estimator.addVisionMeasurement(vision_pose, timestamp_ms)
 
-        def get_pose(self) -> Pose2d:
-            return self.pose_estimator.getEstimatedPosition()
+    def get_pose(self) -> Pose2d:
+        return self.pose_estimator.getEstimatedPosition()
 
-        def reset_pose(self, pose: Pose2d) -> None:
-            # Reset wheel distance so odometry starts clean
-            self.fl.reset_drive_distance()
-            self.fr.reset_drive_distance()
-            self.bl.reset_drive_distance()
-            self.br.reset_drive_distance()
+    def reset_pose(self, pose: Pose2d) -> None:
+        # Reset wheel distance so odometry starts clean
+        self.fl.reset_drive_distance()
+        self.fr.reset_drive_distance()
+        self.bl.reset_drive_distance()
+        self.br.reset_drive_distance()
 
-            self.pose_estimator.resetPosition(
-                self.get_yaw(),
-                self.get_module_positions(),
-                pose,
-            )
+        self.pose_estimator.resetPosition(
+            self.get_yaw(),
+            self.get_module_positions(),
+            pose,
+        )
 
-            def execute(self) -> None:
-                # 1) Convert field commands -> module states
-                states = self.compute_module_states()
+    def execute(self) -> None:
+        # 1) Convert field commands -> module states
+        states = self.compute_module_states()
 
-                # 2) tell modules what to do
-                self._apply_states(states)
+        # 2) tell modules what to do
+        self._apply_states(states)
 
-                # 3) update pose (odometry)
-                self.update_odometry()
+        # 3) update pose (odometry)
+        self.update_odometry()
 
-                # 4) Correct pose with AprilTags when available
-                self.try_add_vision_measurement()
+        # 4) Correct pose with AprilTags when available
+        self.try_add_vision_measurement()
 
-                # 5) debug on dashboard for students
-                pose = self.get_pose()
-                wpilib.SmartDashboard.putNumber("pose/x_m", pose.X())
-                wpilib.SmartDashboard.putNumber("pose/y_m", pose.Y())
-                wpilib.SmartDashboard.putNumber("pose/deg", pose.rotation().degrees())
-
+        # 5) debug on dashboard for students
+        pose = self.get_pose()
+        wpilib.SmartDashboard.putNumber("pose/x_m", pose.X())
+        wpilib.SmartDashboard.putNumber("pose/y_m", pose.Y())
+        wpilib.SmartDashboard.putNumber("pose/deg", pose.rotation().degrees())

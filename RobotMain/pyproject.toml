@@ -1,28 +1,29 @@
 #
-# Use this configuration file to control what RobotPy packages are installed
-# on your RoboRIO
+# RobotPy configuration (FRC 2026)
+# This controls what gets installed on the roboRIO when we deploy
 #
 
 [tool.robotpy]
 
-# Version of robotpy this project depends on
+# RobotPy version for the season (you already have this right)
 robotpy_version = "2026.2.1"
 
-# Which optional robotpy components should be installed?
-# -> equivalent to `pip install robotpy[extra1, ...]`
+# Optional RobotPy extras (these are real extras provided by the robotpy meta package)
+# Pick what you actually use. "all" is fine for beginners.
 components = [
     "all",
-    "apriltag",
-    "commands2",
-    "cscore",
-    "romi",
-    "sim",
-    "xrp",
-    "rev",        # <-- Added REV support
+    # OR if you prefer explicit instead of "all", you could do:
+    # "sim",
+    # "commands2",
+    # "cscore",
+    # "apriltag",
+    # "romi",
+    # "xrp",
 ]
 
-# Other pip packages to install, such as vendor packages (each element
-# is equivalent to a line in requirements.txt)
+# Third-party / vendor packages (PyPI package names)
 requires = [
-    "wpilib",
+    "robotpy-wpilib-utilities",  # MagicBot framework
+    "robotpy-rev",               # REV Spark MAX support
+    "robotpy-navx",              # navX2 gyro support
 ]

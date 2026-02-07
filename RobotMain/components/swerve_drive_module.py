@@ -85,11 +85,11 @@ class SwerveModule:
         current_angle = Rotation2d(self.get_abs_angle_rad())
 
         # Optimize: may flip wheel 180° and reverse speed to avoid long turns
-        optimized = SwerveModuleState.optimized(desired, current_angle)
+        desired.optimize(current_angle)
 
         # Store targets for execute() to use
-        self.target_speed_mps = optimized.speed
-        self.target_angle_rad = optimized.angle.radians()
+        self.target_speed_mps = desired.speed
+        self.target_angle_rad = desired.angle.radians()
 
     def _apply_drive(self) -> None:
         # Because we configured conversion factors,

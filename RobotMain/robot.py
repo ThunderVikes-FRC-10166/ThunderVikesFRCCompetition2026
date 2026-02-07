@@ -4,8 +4,10 @@ import math
 from ntcore import NetworkTableInstance
 import rev
 # from RobotMain.samples.samplecomponentusage import MyRobot
-from .components.swerve_drive_real import SwerveDrive
-from .components.swerve_drive_module import SwerveModule
+
+from components.swerve_drive_module import SwerveModule
+from components.swerve_drive_real import SwerveDrive
+
 # ----------------------
 # --------------------------------------------------------
 #  MagicBot Overview

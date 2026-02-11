@@ -5,7 +5,7 @@ from ntcore import NetworkTableInstance
 import navx
 
 from wpimath.geometry import Pose2d, Rotation2d, Translation2d
-from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics
+from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from .swerve_drive_module import SwerveModule
 
@@ -57,10 +57,13 @@ class SwerveDrive:
         # Pose estimator (odometry + vision)
         #---------------------
         initial_pose = Pose2d(0.0, 0.0, Rotation2d())
+        zero_position_modules = (SwerveModulePosition(), SwerveModulePosition(),
+                                       SwerveModulePosition(), SwerveModulePosition())
+        zero_position_modules = tuple(zero_position_modules)
         self.pose_estimator = SwerveDrive4PoseEstimator(
             self.kinematics,
             self.get_yaw(),
-            self.get_module_positions(),
+            zero_position_modules,
             initial_pose,
         )
 
@@ -103,6 +106,7 @@ class SwerveDrive:
     def _compute_module_states(self):
         robot_speeds = self._get_robot_relative_speeds()
         states = self.kinematics.toSwerveModuleStates(robot_speeds)
+        SwerveDrive4Kinematics.desaturateWheelSpeeds(states, 4.5)
         return states
 
     def _apply_states(self, states) -> None:

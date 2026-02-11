@@ -18,7 +18,7 @@ class SwerveModule:
     # magicBot will inject these from robot.py createObjects()
     drive_motor: rev.SparkFlex
     turn_motor: rev.SparkMax
-    abs_encoder: wpilib.DutyCycleEncoder
+    # abs_encoder: wpilib.DutyCycleEncoder
 
     abs_offset_rad: float
 
@@ -36,6 +36,7 @@ class SwerveModule:
         #---Rev sensors/controllers ---
         self.drive_encoder = self.drive_motor.getEncoder()
 
+        self.abs_encoder = self.turn_motor.getAbsoluteEncoder()
 
 
         wheel_circumference_m = math.pi * self.wheel_diameter_m
@@ -76,7 +77,7 @@ class SwerveModule:
     def get_abs_angle_rad(self) -> float:
         # DutyCycleEncoder gives 0.0..1.0 for one full rotation
         try:
-            turns_0_to_1 = self.abs_encoder.getAbsolutePosition()
+            turns_0_to_1 = self.abs_encoder.getPosition()
             raw_rad = turns_0_to_1 * 2.0 * math.pi
 
             # Apply offset so 'forward' becomes 0 rad
@@ -111,8 +112,8 @@ class SwerveModule:
 
         #PID output is a "turn effort" to match the target angle
         output = self.turn_pid.calculate(current, self.target_angle_rad)
-        if current == self.target_angle_rad:
-            output = 0.0
+        # if current == self.target_angle_rad:
+        #     output = 0.0
         # Clamp voltage so we don't slam the turn motor
         if output > self.max_turn_volts:
             output = self.max_turn_volts

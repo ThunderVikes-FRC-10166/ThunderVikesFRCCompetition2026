@@ -4,9 +4,17 @@ import math
 from ntcore import NetworkTableInstance
 import rev
 
+# from RobotMain.samples.samplecomponentusage import MyRobot
+
+from components.swerve_drive_module import SwerveModule
+from components.swerve_drive_real import SwerveDrive
+
+
+
 # from RobotMain.components.swerve_drive_module import SwerveModule
 from components.swerve_drive_real import SwerveDrive
 from components.swerve_drive_module import SwerveModule
+
 # ----------------------
 # --------------------------------------------------------
 #  MagicBot Overview
@@ -33,7 +41,12 @@ def deadband(x: float, db: float = 0.08) -> float:
 
 
 class MyRobot(magicbot.MagicRobot):
+    fl: SwerveModule
+    fr: SwerveModule
+    bl: SwerveModule
+    br: SwerveModule
     swerve: SwerveDrive
+
     """
     This class represents your entire robot program.
 
@@ -198,6 +211,11 @@ class MyRobot(magicbot.MagicRobot):
         vx = x * self.max_speed_mps
         vy = y * self.max_speed_mps
         omega = rot * self.max_omega_radps
+
+        wpilib.SmartDashboard.putNumber("Vx",vx)
+        wpilib.SmartDashboard.putNumber("vy",vy)
+        wpilib.SmartDashboard.putNumber("omega",omega)
+
 
         self.swerve.drive(vx, vy, omega)
 

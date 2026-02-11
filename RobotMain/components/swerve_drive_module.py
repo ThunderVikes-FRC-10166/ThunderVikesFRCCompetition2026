@@ -2,10 +2,9 @@ import math
 import wpilib
 import rev
 
-
-from wpimath.controller import PIDController
 from wpimath.geometry import Rotation2d
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
+
 
 def wrap_to_pi(rad: float) -> float:
     while rad > math.pi:
@@ -14,158 +13,172 @@ def wrap_to_pi(rad: float) -> float:
         rad += 2.0 * math.pi
     return rad
 
+
 class SwerveModule:
-    # magicBot will inject these from robot.py createObjects()
+    """
+    REV MAXSwerve-style module (3" wheels):
+      - Drive motor: SPARK Flex (NEO / NEO Vortex) -> velocity closed-loop
+      - Turn motor:  SPARK MAX  (NEO 550)          -> position closed-loop using SPARK absolute encoder
+
+    MagicBot will inject these from robot.py createObjects():
+      - <name>_drive_motor -> drive_motor
+      - <name>_turn_motor  -> turn_motor
+      - <name>_abs_offset_rad -> abs_offset_rad
+    """
     drive_motor: rev.SparkFlex
     turn_motor: rev.SparkMax
-    # abs_encoder: wpilib.DutyCycleEncoder
-
     abs_offset_rad: float
 
+    # Optional per-module inversion flags (set in robot.py if needed)
+    drive_inverted: bool = False
+    turn_inverted: bool = False
+
     def setup(self) -> None:
+        # ----------------------------
+        # Physical constants (edit if needed)
+        # ----------------------------
+        self.wheel_diameter_m = 0.0762  # 3 inches
+        # Medium MAXSwerve is commonly ~5.08:1 (motor rotations per 1 wheel rotation)
+        # VERIFY this matches your installed pinion/spur combo
+        self.drive_gear_ratio = 5.08
 
-        # --- Physical Constants (edit for your robot) ---
-        self.wheel_diameter_m = 0.0762 # 3 inches in meters
-        self.drive_gear_ratio = 5.08 #Medium MAXSwerve (motor rotation per wheel rotation)
-
-        # Absolute encoder offset (radians)
-        # Meaning: when wheel is pointing FORWARD, we want angle = 0 rad.
-
-
-        # self.abs_offset_rad = 0.0 # TODO: measure per module and set robot in constants
-        #---Rev sensors/controllers ---
-        self.drive_encoder = self.drive_motor.getEncoder()
-
-        self.abs_encoder = self.turn_motor.getAbsoluteEncoder()
-
-
+        # ----------------------------
+        # Conversion factors
+        # ----------------------------
         wheel_circumference_m = math.pi * self.wheel_diameter_m
-         # 1 motor rotation -> (1/gear_ratio) wheel rotations -> meters traveled
-        self.meter_per_motor_rotation = wheel_circumference_m / self.drive_gear_ratio
+        meters_per_motor_rotation = wheel_circumference_m / self.drive_gear_ratio
+        meters_per_second_per_rpm = meters_per_motor_rotation / 60.0
 
-        # Spark encoder velocity is RPM, so convert RPM -> m/s (divide by 60)
-        self.meter_per_second_per_rpm = self.meter_per_motor_rotation / 60.0
+        # ----------------------------
+        # DRIVE: SparkFlex velocity closed-loop in m/s
+        # ----------------------------
+        drive_cfg = rev.SparkFlexConfig()
+        drive_cfg.inverted(self.drive_inverted)
+        drive_cfg.setIdleMode(rev.SparkBaseConfig.IdleMode.kBrake)
+        drive_cfg.smartCurrentLimit(60)
 
-        # Tell spark MAX encoder to report meter and m/s directly
-        cfg = rev.SparkFlexConfig()
-        cfg.encoder.positionConversionFactor(self.meter_per_motor_rotation)
-        cfg.encoder.velocityConversionFactor(self.meter_per_second_per_rpm)
+        drive_cfg.encoder.positionConversionFactor(meters_per_motor_rotation)
+        drive_cfg.encoder.velocityConversionFactor(meters_per_second_per_rpm)
+
+        # STARTING GAINS (you WILL tune these)
+        drive_cfg.closedLoop.pid(0.15, 0.0, 0.0)
+        drive_cfg.closedLoop.velocityFF(0.0)
+        drive_cfg.closedLoop.outputRange(-1.0, 1.0)
 
         self.drive_motor.configure(
-            cfg,
+            drive_cfg,
             rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kPersistParameters
+            rev.PersistMode.kPersistParameters,
         )
-
-        # Closed-loop controller for drive velocity
+        self.drive_encoder = self.drive_motor.getEncoder()
         self.drive_ctrl = self.drive_motor.getClosedLoopController()
 
-        #--------------------
-        # Turning PID (we control turning with voltage)
-        #--------------------
-        self.turn_pid = PIDController(4.0, 0.0, 0.2) #TODO: Tune
-        self.turn_pid.enableContinuousInput(-math.pi, math.pi)
+        # ----------------------------
+        # TURN: SparkMax position closed-loop in radians, using absolute encoder
+        # ----------------------------
+        turn_cfg = rev.SparkMaxConfig()
+        turn_cfg.inverted(self.turn_inverted)
+        turn_cfg.setIdleMode(rev.SparkBaseConfig.IdleMode.kBrake)
+        turn_cfg.smartCurrentLimit(30)
 
-        self.max_turn_volts = 6.0  # safety limit so it doesn't slam
+        # Absolute encoder native units are rotations. Convert to radians.
+        turn_cfg.absoluteEncoder.positionConversionFactor(2.0 * math.pi)
 
-        #--------------
-        # target (what we WANT the module to do)
-        #--------------
+        # Make the turn PID use the absolute encoder
+        turn_cfg.closedLoop.setFeedbackSensor(rev.FeedbackSensor.kAbsoluteEncoder)
+
+
+        # Choose shortest path around the circle
+        turn_cfg.closedLoop.positionWrappingEnabled(True)
+        turn_cfg.closedLoop.positionWrappingInputRange(-math.pi, math.pi)
+
+        # STARTING GAINS (oscillation? lower P first)
+        turn_cfg.closedLoop.pid(1.2, 0.0, 0.10)
+        # test with 0.35 if it works, can update to 1.0
+        turn_cfg.closedLoop.outputRange(-0.35, 0.35)
+
+        self.turn_motor.configure(
+            turn_cfg,
+            rev.ResetMode.kResetSafeParameters,
+            rev.PersistMode.kPersistParameters,
+        )
+        self.turn_ctrl = self.turn_motor.getClosedLoopController()
+        self.abs_encoder = self.turn_motor.getAbsoluteEncoder()
+
+        # ----------------------------
+        # Targets (set by SwerveDrive)
+        # ----------------------------
         self.target_speed_mps = 0.0
         self.target_angle_rad = 0.0
 
-    def get_abs_angle_rad(self) -> float:
-        # DutyCycleEncoder gives 0.0..1.0 for one full rotation
-        try:
-            turns_0_to_1 = self.abs_encoder.getPosition()
-            raw_rad = turns_0_to_1 * 2.0 * math.pi
+        # Anti-jitter: when you're basically stopped, hold last angle
+        self.hold_angle_speed_deadband_mps = 0.05
+        self._last_good_angle_rad = 0.0
 
-            # Apply offset so 'forward' becomes 0 rad
-            adjusted = raw_rad - self.abs_offset_rad
-            return wrap_to_pi(adjusted)
-        except Exception as e:
-            return wrap_to_pi(0)
+        # Start by holding current angle so it doesn't jump on enable
+        self._last_good_angle_rad = self.get_abs_angle_rad()
+        self.target_angle_rad = self._last_good_angle_rad
+
+    def get_abs_angle_rad(self) -> float:
+        """
+        Absolute turning angle in radians, wrapped to [-pi, pi], with offset applied.
+
+        NOTE: because we set positionConversionFactor(2*pi),
+              abs_encoder.getPosition() returns radians already.
+        """
+        raw_rad = float(self.abs_encoder.getPosition())
+        adjusted = raw_rad - float(self.abs_offset_rad)
+        return wrap_to_pi(adjusted)
 
     def set(self, speed_mps: float, angle_rad: float) -> None:
-        # Create a desired state using WPILib types
-        desired = SwerveModuleState(speed_mps, Rotation2d(angle_rad))
-
-        # Current module angle from the absolute encoder
+        # Create desired state and optimize to avoid spinning 180° unnecessarily
+        desired = SwerveModuleState(float(speed_mps), Rotation2d(float(angle_rad)))
         current_angle = Rotation2d(self.get_abs_angle_rad())
-
-        # Optimize: may flip wheel 180° and reverse speed to avoid long turns
         desired.optimize(current_angle)
 
-        # Store targets for execute() to use
-        self.target_speed_mps = desired.speed
-        self.target_angle_rad = desired.angle.radians()
+        self.target_speed_mps = float(desired.speed)
+        self.target_angle_rad = wrap_to_pi(float(desired.angle.radians()))
 
-    def _apply_drive(self) -> None:
-        # Because we configured conversion factors,
-        # The velocity setpoint is in meter/sec (m/s).
+        # Anti-jitter: don't chase tiny angle changes if we aren't driving
+        if abs(self.target_speed_mps) < self.hold_angle_speed_deadband_mps:
+            self.target_speed_mps = 0.0
+            self.target_angle_rad = self._last_good_angle_rad
+        else:
+            self._last_good_angle_rad = self.target_angle_rad
+
+    def stop(self) -> None:
+        self.target_speed_mps = 0.0
+        self.target_angle_rad = self._last_good_angle_rad
+
+    def execute(self) -> None:
+        # Drive velocity setpoint is m/s (because we configured conversion factors)
         self.drive_ctrl.setSetpoint(
             self.target_speed_mps,
-            rev.SparkLowLevel.ControlType.kVelocity
+            rev.SparkLowLevel.ControlType.kVelocity,
         )
-    def _apply_turn(self) -> None:
-        current = self.get_abs_angle_rad()
 
-        #PID output is a "turn effort" to match the target angle
-        output = self.turn_pid.calculate(current, self.target_angle_rad)
-        # if current == self.target_angle_rad:
-        #     output = 0.0
-        # Clamp voltage so we don't slam the turn motor
-        if output > self.max_turn_volts:
-            output = self.max_turn_volts
-        elif output < -self.max_turn_volts:
-            output = -self.max_turn_volts
-
-
-        self.turn_motor.setVoltage(output)
-    def execute(self) -> None:
-        # Apply drive and turn outputs using the targets from set()
-        self._apply_drive()
-        self._apply_turn()
-
-        # Debug info so students can see what's happening
-        wpilib.SmartDashboard.putNumber(
-           "swerve/abs_angle_deg",
-           math.degrees(self.get_abs_angle_rad())
-       )
-        wpilib.SmartDashboard.putNumber(
-            "swerve/target_angle_deg",
-            math.degrees(self.target_angle_rad)
+        # Turn position setpoint is radians (because we configured conversion factors)
+        self.turn_ctrl.setSetpoint(
+            self.target_angle_rad,
+            rev.SparkLowLevel.ControlType.kPosition,
         )
-        wpilib.SmartDashboard.putNumber(
-            "swerve/target_speed_mps",
-            self.target_speed_mps
-        )
+
+        # Debug for students
+        wpilib.SmartDashboard.putNumber("swerve/abs_angle_deg", math.degrees(self.get_abs_angle_rad()))
+        wpilib.SmartDashboard.putNumber("swerve/target_angle_deg", math.degrees(self.target_angle_rad))
+        wpilib.SmartDashboard.putNumber("swerve/target_speed_mps", self.target_speed_mps)
+
     def get_state(self) -> SwerveModuleState:
-        # Current wheel speed from drive encoder (m/s)
-        speed_mps = self.drive_encoder.getVelocity()
-
-        # Current wheel angle from absolute encoder
+        speed_mps = float(self.drive_encoder.getVelocity())
         angle = Rotation2d(self.get_abs_angle_rad())
         return SwerveModuleState(speed_mps, angle)
-    def get_position (self) -> SwerveModulePosition:
-        #Total distances traveled by the wheels (meters)
-        try:
-            distance_m = self.drive_encoder.getPosition()
 
-            # Current wheel angle
-            angle = Rotation2d(self.get_abs_angle_rad())
-            return SwerveModulePosition(distance_m, angle)
-        except Exception as e:
-            error = "Value of drive encoder: {}".format( self.drive_motor.getEncoder())
-            wpilib.reportError(error, False)
-            error_2 = "Value of drive motor: {}".format(self.drive_motor)
-            wpilib.reportError(error_2, False)
-            return SwerveModulePosition(0.0, 0.0)
-
+    def get_position(self) -> SwerveModulePosition:
+        distance_m = float(self.drive_encoder.getPosition())
+        angle = Rotation2d(self.get_abs_angle_rad())
+        return SwerveModulePosition(distance_m, angle)
 
     def reset_drive_distance(self) -> None:
-        # Reset the drive encoder to 0 meters
         self.drive_encoder.setPosition(0.0)
-
-        # Start by holding the current angle so it doesn't jump on enable
-        self.target_angle_rad = self.get_abs_angle_rad()
+        self._last_good_angle_rad = self.get_abs_angle_rad()
+        self.target_angle_rad = self._last_good_angle_rad

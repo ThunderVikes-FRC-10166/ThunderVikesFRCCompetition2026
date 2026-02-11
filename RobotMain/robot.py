@@ -3,10 +3,17 @@ import wpilib
 import math
 from ntcore import NetworkTableInstance
 import rev
+
 # from RobotMain.samples.samplecomponentusage import MyRobot
 
 from components.swerve_drive_module import SwerveModule
 from components.swerve_drive_real import SwerveDrive
+
+
+
+# from RobotMain.components.swerve_drive_module import SwerveModule
+from components.swerve_drive_real import SwerveDrive
+from components.swerve_drive_module import SwerveModule
 
 # ----------------------
 # --------------------------------------------------------
@@ -128,6 +135,12 @@ class MyRobot(magicbot.MagicRobot):
         self.br_turn_motor = rev.SparkMax(24, motor_type)
         self.br_abs_encoder = wpilib.DutyCycleEncoder(3)
 
+        # offsets in radians (measured in REV Hardware Client)
+        # TODO: We must find the actual offset using the rev hardware client and aligning each wheel to face forward.
+        self.fl_abs_offset_rad = 0
+        self.fr_abs_offset_rad = 0
+        self.bl_abs_offset_rad = 0
+        self.br_abs_offset_rad = 0
 
 
 
@@ -198,9 +211,11 @@ class MyRobot(magicbot.MagicRobot):
         vx = x * self.max_speed_mps
         vy = y * self.max_speed_mps
         omega = rot * self.max_omega_radps
+
         wpilib.SmartDashboard.putNumber("Vx",vx)
         wpilib.SmartDashboard.putNumber("vy",vy)
         wpilib.SmartDashboard.putNumber("omega",omega)
+
 
         self.swerve.drive(vx, vy, omega)
 

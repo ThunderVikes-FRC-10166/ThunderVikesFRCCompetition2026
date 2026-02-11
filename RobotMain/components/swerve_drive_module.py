@@ -20,6 +20,8 @@ class SwerveModule:
     turn_motor: rev.SparkMax
     abs_encoder: wpilib.DutyCycleEncoder
 
+    abs_offset_rad: float
+
     def setup(self) -> None:
 
         # --- Physical Constants (edit for your robot) ---
@@ -30,7 +32,7 @@ class SwerveModule:
         # Meaning: when wheel is pointing FORWARD, we want angle = 0 rad.
 
 
-        self.abs_offset_rad = 0.0 # TODO: measure per module and set robot in constants
+        # self.abs_offset_rad = 0.0 # TODO: measure per module and set robot in constants
         #---Rev sensors/controllers ---
         self.drive_encoder = self.drive_motor.getEncoder()
 

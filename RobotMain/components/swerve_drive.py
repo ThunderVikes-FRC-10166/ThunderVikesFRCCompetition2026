@@ -49,7 +49,7 @@ import navx
 import ntcore
 
 from magicbot import will_reset_to
-from components.swerve_module import SwerveModule
+from .swerve_module import SwerveModule
 import constants
 
 

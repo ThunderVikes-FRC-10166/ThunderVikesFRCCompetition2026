@@ -77,10 +77,10 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # Think of it like calibrating a compass - we need to know which way each
 # module thinks is "north" compared to the robot's actual "north" (forward).
 
-kFrontLeftChassisAngularOffset = math.pi   # -90 degrees
+kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
 kFrontRightChassisAngularOffset = 0              # 0 degrees
 kRearLeftChassisAngularOffset = math.pi          # 180 degrees
-kRearRightChassisAngularOffset = 0    # 90 degrees
+kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
 
 # =============================================================================
 # CAN BUS IDS

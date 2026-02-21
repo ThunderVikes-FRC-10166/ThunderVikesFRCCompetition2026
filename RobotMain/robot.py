@@ -227,6 +227,7 @@ class SwerveRobot(magicbot.MagicRobot):
         self.swerve_drive.set_drive_command(
             x_speed, y_speed, rot, True, True
         )
+        # wpilib.SmartDashboard.putNumber("bob", x_speed)
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

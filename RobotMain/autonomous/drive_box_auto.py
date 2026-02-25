@@ -3,7 +3,7 @@ import wpilib
 class DriveBoxAuto():
     MODE_NAME = "Drive Box (SIM)"
 
-    DEFAULT = True
+    DEFAULT = False
 
     def __init__(self):
         # This will be filled in by robot.py  (we do that in robotInit)

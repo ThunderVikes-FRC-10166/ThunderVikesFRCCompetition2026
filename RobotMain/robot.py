@@ -48,6 +48,7 @@ import wpilib
 import wpimath
 import wpimath.filter
 import magicbot
+from ntcore import NetworkTableInstance
 
 from components.swerve_drive import SwerveDrive
 import constants
@@ -107,6 +108,15 @@ class SwerveRobot(magicbot.MagicRobot):
         self.x_speed_limiter = wpimath.filter.SlewRateLimiter(3)
         self.y_speed_limiter = wpimath.filter.SlewRateLimiter(3)
         self.rot_limiter = wpimath.filter.SlewRateLimiter(3)
+
+        # =====================================================================
+        # LIMELIGHT VISION
+        # =====================================================================
+        # The Limelight camera publishes AprilTag data to NetworkTables.
+        # In simulation, physics.py publishes fake data using the same keys.
+        # Either way, we read from the same table — no code changes needed
+        # when switching from sim to real robot.
+        self.ll = NetworkTableInstance.getDefault().getTable("limelight")
 
     def teleopInit(self) -> None:
         """
@@ -227,7 +237,19 @@ class SwerveRobot(magicbot.MagicRobot):
         self.swerve_drive.set_drive_command(
             x_speed, y_speed, rot, True, True
         )
-        # wpilib.SmartDashboard.putNumber("bob", x_speed)
+
+        # =====================================================================
+        # VISION DEBUG OUTPUT
+        # =====================================================================
+        # Show what the Limelight sees on SmartDashboard for debugging.
+        # tv = 1 means a tag is visible, tid = which tag, tx = angle offset
+        tv = self.ll.getNumber("tv", 0)
+        wpilib.SmartDashboard.putBoolean("vision/tag_visible", tv >= 1)
+        if tv >= 1:
+            tid = int(self.ll.getNumber("tid", -1))
+            tx = self.ll.getNumber("tx", 0.0)
+            wpilib.SmartDashboard.putNumber("vision/tag_id", tid)
+            wpilib.SmartDashboard.putNumber("vision/tx", tx)
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

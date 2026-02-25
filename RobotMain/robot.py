@@ -1,180 +1,255 @@
-import magicbot
+"""
+robot.py - Main Robot Program
+================================
+
+This is the ENTRY POINT for the robot code - the first file that runs.
+Think of it like the "main menu" of a video game.
+
+WE USE MAGICBOT FRAMEWORK:
+MagicBot is a framework built on top of WPILib that makes robot code easier
+to organize. Here's what it does for us:
+
+1. AUTOMATIC COMPONENT MANAGEMENT:
+   - We create "components" (like SwerveDrive) as class variables
+   - MagicBot automatically calls their setup() and execute() methods
+   - Components reset to safe values every cycle (safety feature!)
+
+2. AUTOMATIC AUTONOMOUS SUPPORT:
+   - Put autonomous mode files in the 'autonomous/' folder
+   - MagicBot finds them and lets you pick from the Driver Station
+
+3. CLEAR STRUCTURE:
+   - createObjects(): Set up hardware and create components
+   - teleopPeriodic(): Read driver inputs and tell components what to do
+   - Components do the actual work in their execute() methods
+
+CONTROL SCHEME:
+==============
+LEFT JOYSTICK:
+  - Up/Down → Drive forward/backward (field-relative)
+  - Left/Right → Strafe left/right (field-relative)
+
+RIGHT JOYSTICK:
+  - Left/Right → Rotate the robot
+
+D-PAD (Direction Pad):
+  - Up → Drive forward at 1 m/s
+  - Down → Drive backward at 1 m/s
+  - Left → Strafe left at 1 m/s
+  - Right → Strafe right at 1 m/s
+  (These are FIELD-RELATIVE so "up" always goes toward the far end)
+
+BUTTONS:
+  - Start button → Reset the gyroscope heading (re-calibrate "forward")
+  - X button → Lock wheels in X formation (resist being pushed)
+"""
+
 import wpilib
-import math
-from ntcore import NetworkTableInstance
-# from RobotMain.samples.samplecomponentusage import MyRobot
-from components.swerve_drive_sim import SwerveDriveSim
-# ----------------------
-# --------------------------------------------------------
-#  MagicBot Overview
-# ------------------------------------------------------------------------------
-# MagicBot is a framework built on top of WPILib that helps FRC teams organize
-# their robot code in a clean, modular way. Instead of putting all logic inside
-# one giant file, MagicBot encourages you to break your robot into "components"
-# (like DriveTrain, Shooter, Intake, etc.) and "controllers" (logic that decides
-# what those components should do).
-#
-# This file defines the *main robot program* that the roboRIO runs. MagicBot
-# calls specific methods at specific times during the match:
-#
-#   - createObjects():   Runs once when the robot starts up
-#   - teleopInit():      Runs once when Teleop mode begins
-#   - teleopPeriodic():  Runs repeatedly (50 times per second) during Teleop
-#
-# Students will fill these methods with real robot code as the robot develops.
-# ------------------------------------------------------------------------------
-def deadband(x: float, db: float = 0.08) -> float:
-    return 0.0 if abs(x) < db else x
+import wpimath
+import wpimath.filter
+import magicbot
+
+from components.swerve_drive import SwerveDrive
+import constants
 
 
-
-
-class MyRobot(magicbot.MagicRobot):
-    swerve: SwerveDriveSim
+class SwerveRobot(magicbot.MagicRobot):
     """
-    This class represents your entire robot program.
+    Our FRC robot using swerve drive with the MagicBot framework.
 
-    MagicBot automatically handles:
-      - Running your code at the correct times
-      - Managing components (subsystems)
-      - Ensuring periodic functions run at 50Hz
-      - Organizing your robot logic cleanly
-
-    You will expand this class as your robot gains motors, sensors, and features.
+    HOW MAGICBOT WORKS:
+    1. We declare components as class-level annotations (type hints)
+    2. MagicBot automatically creates them and calls their setup()
+    3. During operation, MagicBot calls execute() on each component every 20ms
+    4. Our job is to read inputs in teleopPeriodic() and set commands on components
     """
-    def robotInit(self):
-        super().robotInit()
-        self._attach_robot_to_auto_modes()
 
-    def _attach_robot_to_auto_modes(self):
+    # =========================================================================
+    # COMPONENT DECLARATIONS
+    # =========================================================================
+    # By declaring these here, MagicBot will:
+    # 1. Create an instance of each class
+    # 2. Call their setup() method
+    # 3. Automatically call their execute() method every 20ms
+    #
+    # The variable names MATTER - they're used for injection into autonomous modes.
+    # If an autonomous mode has a variable called 'swerve_drive', MagicBot will
+    # automatically give it our SwerveDrive instance.
+
+    swerve_drive: SwerveDrive
+
+    def createObjects(self) -> None:
         """
-        Give each autonomous mode a reference to this robot instance.
-        This allows autonomous code to call:
-            self.robot.swerve.drive(...)
+        Called when the robot first starts up.
+
+        This is where we create all our input devices (joysticks, controllers)
+        and any other hardware that isn't part of a component.
+
+        IMPORTANT: Don't create component objects here! MagicBot handles that.
+        Just create input devices and other non-component objects.
         """
-        selector = getattr(self, "_automodes", None)
-        if selector is None:
-            selector = getattr(self, "autonomous", None)
 
-        if selector is None:
-            wpilib.reportWarning("No autonomous selector found; cannot attach robot to auto modes")
-            return
+        # =====================================================================
+        # DRIVER CONTROLLER
+        # =====================================================================
+        # Xbox controller connected to the Driver Station on port 0.
+        # The driver uses this to control the robot's movement.
+        self.driver_controller = wpilib.XboxController(
+            constants.kDriverControllerPort
+        )
 
-        modes = getattr(selector, "modes", None)
-        if not isinstance(modes, dict) or not modes:
-            wpilib.reportWarning("Autonomous selector has no modes (did you create autonomous/__init__.py?")
-            return
+        # =====================================================================
+        # SLEW RATE LIMITERS
+        # =====================================================================
+        # These smooth out the joystick inputs so the robot doesn't jerk around.
+        # The number (3) means the value can change by 3 units per second max.
+        # So going from 0 to 1 takes about 1/3 of a second.
+        self.x_speed_limiter = wpimath.filter.SlewRateLimiter(3)
+        self.y_speed_limiter = wpimath.filter.SlewRateLimiter(3)
+        self.rot_limiter = wpimath.filter.SlewRateLimiter(3)
 
-        for mode in modes.values():
-            mode.robot = self
-
-        wpilib.reportWarning(f"Attached robot reference to {len(modes)} autonomous mode(s)")
-    # --------------------------------------------------------------------------
-    # createObjects()
-    # --------------------------------------------------------------------------
-    def createObjects(self):
-        self.driver = wpilib.XboxController(0)
-        self.ll = NetworkTableInstance.getDefault().getTable("limelight")
+    def teleopInit(self) -> None:
         """
-        This method is called ONCE when the robot boots.
+        Called once when teleop mode starts.
 
-        Use this method to:
-          - Create motor controller objects (Talon, Spark, Victor, etc.)
-          - Create sensors (Encoders, Gyros, Limit Switches)
-          - Create joysticks or Xbox controllers
-          - Create pneumatics objects (Solenoids, Compressors)
-          - Instantiate MagicBot components (DriveTrain, Shooter, etc.)
-
-        IMPORTANT:
-        - Do NOT put robot logic here.
-        - Only create hardware objects and assign them to variables.
-        - MagicBot will automatically inject these into your components.
-
-        Example of what this might look like later:
-
-            self.left_motor = wpilib.Talon(1)
-            self.right_motor = wpilib.Talon(2)
-            self.driver_controller = wpilib.XboxController(0)
-
-        For now, it's empty because we haven't defined hardware yet.
+        Teleop is the period of the match when the driver controls the robot
+        (after autonomous ends). This is a good place to reset things.
         """
         pass
 
-
-    # --------------------------------------------------------------------------
-    # teleopInit()
-    # --------------------------------------------------------------------------
-    def teleopInit(self):
+    def teleopPeriodic(self) -> None:
         """
-        This method runs ONCE when Teleop mode begins.
+        Called every 20ms during teleop mode.
 
-        Use this for:
-          - Resetting sensors (encoders, gyros)
-          - Zeroing state variables
-          - Preparing subsystems for driver control
-          - Printing debug info to the console
+        This is the main driver control loop. We:
+        1. Read the joystick/d-pad inputs
+        2. Apply deadbands (ignore tiny accidental movements)
+        3. Tell the swerve drive what to do
 
-        Example of what this might look like later:
-
-            self.drive.resetEncoders()
-            print("Teleop has started!")
-
-        This method is optional — if you don't need it, you can leave it empty.
+        The swerve drive component's execute() will then make it happen.
         """
+
+        # =====================================================================
+        # CHECK FOR SPECIAL BUTTONS
+        # =====================================================================
+
+        # START button: Reset the gyroscope heading
+        # Press this when the robot is facing the direction you want to be "forward"
+        if self.driver_controller.getStartButtonPressed():
+            self.swerve_drive.zero_heading()
+
+        # X button (held): Lock wheels in X formation
+        # This makes the robot really hard to push around
+        if self.driver_controller.getXButton():
+            self.swerve_drive.set_x_formation()
+            return  # Skip normal driving when X is held
+
+        # =====================================================================
+        # D-PAD CONTROL
+        # =====================================================================
+        # The D-pad (POV hat) moves the robot at exactly 1 m/s in the
+        # pressed direction. This is great for precise positioning!
+        #
+        # getPOV() returns the angle in degrees:
+        #   0 = up, 90 = right, 180 = down, 270 = left, -1 = not pressed
+        pov = self.driver_controller.getPOV()
+
+        if pov != -1:
+            # D-pad is pressed! Calculate the X and Y speeds.
+            # We use the D-pad speed from constants (1 m/s).
+            # Since this is field-relative, "up" on the D-pad always moves
+            # the robot toward the far end of the field.
+
+            # Convert POV angle to X/Y components
+            # Note: POV 0 = forward (positive X), 90 = right (negative Y in WPILib)
+            import math
+            pov_rad = math.radians(pov)
+
+            # Forward/backward component (positive = forward)
+            # cos(0°) = 1 (forward), cos(180°) = -1 (backward)
+            dpad_x = math.cos(pov_rad) * (constants.kDpadSpeed / constants.kMaxSpeed)
+
+            # Left/right component (positive = left in WPILib convention)
+            # We negate sin because POV 90° = right, but WPILib positive Y = left
+            dpad_y = -math.sin(pov_rad) * (constants.kDpadSpeed / constants.kMaxSpeed)
+
+            self.swerve_drive.set_drive_command(
+                dpad_x,
+                dpad_y,
+                0.0,  # No rotation from D-pad
+                True,  # Always field-relative for D-pad
+                False,  # No rate limiting for D-pad (immediate response)
+            )
+            return  # Skip joystick input when D-pad is active
+
+        # =====================================================================
+        # JOYSTICK CONTROL
+        # =====================================================================
+        # Read the joystick axes and convert them to drive commands.
+        #
+        # Xbox controller axes:
+        # Left stick Y (getLeftY): Forward/backward, inverted (push up = negative)
+        # Left stick X (getLeftX): Left/right, inverted (push left = negative)
+        # Right stick X (getRightX): Rotation, inverted (push left = negative)
+        #
+        # We INVERT the values because:
+        # - Xbox: pushing stick forward gives NEGATIVE values
+        # - WPILib: forward is POSITIVE
+        # So we negate to match WPILib conventions.
+
+        # Apply deadband first, then slew rate limiting
+        # Deadband: Ignore joystick values below 0.08 (prevents drift from
+        # a joystick that doesn't perfectly center at 0)
+
+        # Forward/backward speed
+        x_speed = -self.x_speed_limiter.calculate(
+            wpimath.applyDeadband(
+                self.driver_controller.getLeftY(), constants.kDriveDeadband
+            )
+        )
+
+        # Left/right (strafe) speed
+        y_speed = -self.y_speed_limiter.calculate(
+            wpimath.applyDeadband(
+                self.driver_controller.getLeftX(), constants.kDriveDeadband
+            )
+        )
+
+        # Rotation speed
+        rot = -self.rot_limiter.calculate(
+            wpimath.applyDeadband(
+                self.driver_controller.getRightX(), constants.kDriveDeadband
+            )
+        )
+
+        # Send the drive command to the swerve drive component
+        # field_relative=True means "up on joystick = toward far end of field"
+        self.swerve_drive.set_drive_command(
+            x_speed, y_speed, rot, True, True
+        )
+        # wpilib.SmartDashboard.putNumber("bob", x_speed)
+
+    def autonomousInit(self) -> None:
+        """Called once when autonomous mode starts."""
+        # MagicBot handles autonomous mode selection automatically!
+        # Just put autonomous mode files in the 'autonomous/' folder.
+        pass
+
+    def testInit(self) -> None:
+        """Called once when test mode starts."""
+        pass
+
+    def testPeriodic(self) -> None:
+        """Called every 20ms during test mode."""
         pass
 
 
-    # --------------------------------------------------------------------------
-    # teleopPeriodic()
-    # --------------------------------------------------------------------------
-    def teleopPeriodic(self):
-
-        x = -self.driver.getLeftY() #Forward/back
-        y = -self.driver.getLeftX() # strafe
-        rot = -self.driver.getRightX() #rotate
-        x = deadband(x)
-        y = deadband(y)
-        rot = deadband(rot)
-
-        x = math.copysign(x * x, x)
-        y = math.copysign(y * y, y)
-        rot = math.copysign(rot * rot, rot)
-        vx = x * self.swerve.max_speed_mps
-        vy = y * self.swerve.max_speed_mps
-        omega = rot * self.swerve.max_omega_radps
-
-        self.swerve.drive(vx, vy, omega)
-
-        tv = self.ll.getNumber("tv", 0)
-        if tv >= 1:
-            tid = int(self.ll.getNumber("tid", -1))
-            tx = self.ll.getNumber("tx", 0.0)
-            botpose = self.ll.getNumberArray("botpose_wpiblue", [])
-            print(f"[robot] sees tag tid={tid} tx={tx:.1f} botpose={botpose}")
+# =============================================================================
+# PROGRAM ENTRY POINT
+# =============================================================================
+# This is what actually starts the robot code.
+# When you deploy to the RoboRIO or run in simulation, this line kicks
+# everything off.
 
 if __name__ == "__main__":
-    wpilib.run(MyRobot)
-
-    """
-        This method runs REPEATEDLY during Teleop (about 50 times per second).
-
-        This is where you:
-          - Read driver inputs (joysticks, Xbox controller)
-          - Tell your components what to do
-          - Implement driver controls (driving, shooting, intaking, etc.)
-          - Run logic that needs to update continuously
-
-        IMPORTANT:
-        - Do NOT directly control motors here if you're using MagicBot components.
-          Instead, call methods on your components, and let MagicBot handle the
-          actual motor outputs.
-
-        Example of what this might look like later:
-
-            forward = -self.driver_controller.getLeftY()
-            turn = self.driver_controller.getRightX()
-            self.drive.arcade_drive(forward, turn)
-
-        For now, this is empty until hardware and components are added.
-        """
-    pass
+    SwerveRobot.main()

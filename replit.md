@@ -70,14 +70,16 @@ RobotMain/
 
 ## Autonomous Modes
 
-### AprilTag Demo Auto (DEFAULT)
-State machine: INIT → DRIVE_FORWARD → LOOK_FOR_TAG → ALIGN_TO_TAG → SHOOT_STUB → DONE
-- Detects alliance (red/blue) using DriverStation
-- Drives forward using speed × time = distance math
-- Scans for AprilTags by rotating slowly
-- Aligns to tag using proportional control on tx
-- Scorer commands are stubs (ready for when scorer is wired into robot.py)
+### Trench Run Auto (DEFAULT)
+State machine: INIT → DRIVE_TO_TRENCH → CHECK_TRENCH_TAG → DRIVE_THROUGH_TRENCH → TURN_TO_GOAL → DRIVE_TO_GOAL → FIND_GOAL_TAG → ALIGN_TO_GOAL → SHOOT_STUB → DONE
+- Detects alliance (red/blue) and selects correct tag IDs (Blue: trench=28, goal=26; Red: trench=7, goal=10)
+- Drives fast down the trench collecting balls (speed × time = distance)
+- Confirms position via trench AprilTag
+- Turns toward goal, drives to goal area
+- Finds goal AprilTag and aligns using proportional control (tx → rotation)
+- Scorer stubs show how to intake during trench run and shoot at goal
 - Uses MagicBot injection (swerve_drive: SwerveDrive) — not the old self.robot pattern
+- Designed to complete within 20 seconds
 
 ### Drive Box (SIM) — legacy
 Simple time-based box pattern. Uses old `self.robot.swerve.drive()` API from robot_SIM.py.

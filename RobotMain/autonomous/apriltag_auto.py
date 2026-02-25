@@ -1,39 +1,49 @@
 """
-apriltag_auto.py - AprilTag Demo Autonomous Mode
-===================================================
+apriltag_auto.py - Trench Run + Goal Shot Autonomous Mode
+============================================================
 
-This autonomous mode shows students how to:
-  1. Detect which alliance (red/blue) you're on
-  2. Drive the robot a specific distance using speed × time
-  3. Read AprilTag data from the Limelight (or simulated Limelight)
-  4. Align to an AprilTag by rotating until tx ≈ 0
-  5. Command the scoring system (stubs for future use)
+This is the "real game" autonomous mode for the 2026 season.
 
-HOW MAGICBOT AUTONOMOUS INJECTION WORKS:
-=========================================
-MagicBot can automatically give your autonomous mode access to robot
-components. If you declare a variable with the SAME NAME as a component
-in robot.py, MagicBot fills it in for you.
+WHAT THE ROBOT DOES (20 seconds max):
+  1. Start against the alliance wall, facing the field
+  2. Drive fast down the trench to collect balls
+  3. See the trench AprilTag to confirm position
+  4. Continue through the trench a bit
+  5. Turn toward the goal and drive up to it
+  6. Find the goal AprilTag and align precisely in front of it
+  7. Shoot!
 
-For example, in robot.py we have:
-    swerve_drive: SwerveDrive
+FIELD LAYOUT (2026):
+  Blue alliance:
+    - Trench tag = 28 at (4.588, 0.644)  ← bottom-left area
+    - Goal tag   = 26 at (4.022, 4.035)  ← center-left area
+  Red alliance:
+    - Trench tag =  7 at (11.953, 0.644) ← bottom-right area
+    - Goal tag   = 10 at (12.519, 4.035) ← center-right area
 
-So in this file we declare:
-    swerve_drive: SwerveDrive
+  The trench runs along the bottom edge (y ≈ 0.6m).
+  The goal is in the center (y ≈ 4.0m).
+  So the route is: drive along the bottom → turn up → go to goal.
 
-And MagicBot automatically sets self.swerve_drive to the same
-SwerveDrive instance that robot.py uses. No manual wiring needed!
+TEACHING CONCEPTS:
+  - Alliance detection (red vs blue changes which tags we look for)
+  - Speed × time = distance (how to drive a specific distance)
+  - AprilTag reading from NetworkTables (tv, tid, tx)
+  - Proportional control for alignment (rotate until tx ≈ 0)
+  - Scorer command stubs (intake, shoot — for when scorer is wired in)
 
-STATE MACHINE PATTERN:
-=======================
-Autonomous code usually runs as a "state machine". Think of it like a
-checklist — the robot does step 1, then step 2, then step 3, etc.
-Each step is a "state". A timer controls how long each step lasts.
+HOW MAGICBOT INJECTION WORKS:
+  In robot.py we have:   swerve_drive: SwerveDrive
+  In this file we have:  swerve_drive: SwerveDrive
+  MagicBot automatically connects them — no manual wiring needed!
 
-States in this auto:
-  INIT → DRIVE_FORWARD → LOOK_FOR_TAG → ALIGN_TO_TAG → SHOOT_STUB → DONE
+STATE MACHINE:
+  INIT → DRIVE_TO_TRENCH → CHECK_TRENCH_TAG → DRIVE_THROUGH_TRENCH
+       → TURN_TO_GOAL → DRIVE_TO_GOAL → FIND_GOAL_TAG → ALIGN_TO_GOAL
+       → SHOOT_STUB → DONE
 """
 
+import math
 import wpilib
 from ntcore import NetworkTableInstance
 
@@ -41,45 +51,52 @@ from components.swerve_drive import SwerveDrive
 import constants
 
 
+# =============================================================================
+# APRIL TAG IDS FOR EACH ALLIANCE
+# =============================================================================
+# These come from the 2026 field layout JSON (resources/2026-rebuilt-welded.json).
+# Each alliance has its own set of tags. Change these if the field layout changes.
+
+BLUE_TRENCH_TAG = 28
+BLUE_GOAL_TAG = 26
+RED_TRENCH_TAG = 7
+RED_GOAL_TAG = 10
+
+
 class AprilTagDemoAuto:
-    MODE_NAME = "AprilTag Demo Auto"
+    MODE_NAME = "Trench Run Auto"
     DEFAULT = True
 
     # =========================================================================
     # MAGICBOT INJECTION
     # =========================================================================
-    # MagicBot sees this type annotation and automatically fills in the
-    # swerve_drive component from robot.py. The variable name must EXACTLY
-    # match what's declared in robot.py (swerve_drive: SwerveDrive).
+    # MagicBot sees this type annotation and fills in the swerve_drive
+    # component from robot.py automatically. The name must EXACTLY match.
     swerve_drive: SwerveDrive
 
     # =========================================================================
-    # FUTURE INJECTION - SCORING SYSTEM
+    # FUTURE: SCORING SYSTEM INJECTION
     # =========================================================================
-    # When the ThunderVikingSuperScorer is wired into robot.py, uncomment
-    # this line and MagicBot will inject it automatically:
+    # When ThunderVikingSuperScorer is wired into robot.py, uncomment this:
     #
     # from components.thunder_viking_super_scorer import ThunderVikingSuperScorer
     # thunder_viking_super_scorer: ThunderVikingSuperScorer
-    #
-    # Then you can call:
-    #   self.thunder_viking_super_scorer.intake()
-    #   self.thunder_viking_super_scorer.prepare_to_shoot()
-    #   self.thunder_viking_super_scorer.shoot()
 
     def __init__(self):
         self.timer = wpilib.Timer()
         self.state = "INIT"
-        self.alliance = "unknown"
+        self.alliance = "BLUE"
+
+        self.trench_tag_id = BLUE_TRENCH_TAG
+        self.goal_tag_id = BLUE_GOAL_TAG
 
         self.ll = NetworkTableInstance.getDefault().getTable("limelight")
 
     # =========================================================================
-    # AUTONOMOUS LIFECYCLE
+    # on_enable — runs ONCE when autonomous starts
     # =========================================================================
-
     def on_enable(self):
-        """Called once when autonomous mode starts (the match begins)."""
+        """Called once at the start of autonomous (match begins)."""
 
         self.timer.restart()
         self.state = "INIT"
@@ -87,114 +104,238 @@ class AprilTagDemoAuto:
         # -----------------------------------------------------------------
         # ALLIANCE DETECTION
         # -----------------------------------------------------------------
-        # The Driver Station tells us which alliance we're on (Red or Blue).
-        # This matters because the field is mirrored — what's on the left
-        # for Blue is on the right for Red.
+        # The Driver Station tells us Red or Blue. This changes which
+        # AprilTags we look for (the field is mirrored).
         #
-        # In simulation, getAlliance() might return None (no DS connected),
-        # so we default to Blue.
+        # In sim, getAlliance() may return None, so we default to Blue.
         alliance = wpilib.DriverStation.getAlliance()
         if alliance == wpilib.DriverStation.Alliance.kRed:
             self.alliance = "RED"
-        elif alliance == wpilib.DriverStation.Alliance.kBlue:
-            self.alliance = "BLUE"
+            self.trench_tag_id = RED_TRENCH_TAG
+            self.goal_tag_id = RED_GOAL_TAG
         else:
             self.alliance = "BLUE"
+            self.trench_tag_id = BLUE_TRENCH_TAG
+            self.goal_tag_id = BLUE_GOAL_TAG
 
-        print(f"[Auto] Starting AprilTag Demo Auto — Alliance: {self.alliance}")
+        print(f"[Auto] === TRENCH RUN AUTO ===")
+        print(f"[Auto] Alliance: {self.alliance}")
+        print(f"[Auto] Trench tag: {self.trench_tag_id}, Goal tag: {self.goal_tag_id}")
 
-        # -----------------------------------------------------------------
-        # HOW TO USE ALLIANCE INFO
-        # -----------------------------------------------------------------
-        # You can flip coordinates based on alliance. For example:
-        #
-        #   if self.alliance == "RED":
-        #       target_x = FIELD_LENGTH - blue_target_x  # mirror X
-        #   else:
-        #       target_x = blue_target_x
-        #
-        # The 2026 field is 16.54m long (FIELD_LENGTH in constants).
-        # AprilTags on the Blue side have different IDs than Red side.
-        # For example, the goal on Blue might be tag 7, Red might be tag 4.
-
+    # =========================================================================
+    # on_iteration — runs every 20ms during autonomous
+    # =========================================================================
     def on_iteration(self, time_elapsed: float):
         """Called every 20ms during autonomous mode."""
 
         t = self.timer.get()
 
+        # Post current state to SmartDashboard so you can see what's happening
+        wpilib.SmartDashboard.putString("auto/state", self.state)
+        wpilib.SmartDashboard.putNumber("auto/timer", t)
+
         # =================================================================
-        # STATE: INIT
+        # STATE: INIT (instant — one cycle only)
         # =================================================================
-        # Reset the gyro so "forward" matches our starting direction.
-        # This only takes one cycle, then we move to the next state.
+        # Zero the gyroscope so the robot's current facing direction
+        # becomes "0 degrees". This is critical for field-relative driving.
         if self.state == "INIT":
             self.swerve_drive.zero_heading()
-            self.state = "DRIVE_FORWARD"
+            self.state = "DRIVE_TO_TRENCH"
             self.timer.restart()
-            print("[Auto] Gyro zeroed, starting to drive forward")
+            print("[Auto] Gyro zeroed — driving to trench!")
 
         # =================================================================
-        # STATE: DRIVE_FORWARD
+        # STATE: DRIVE_TO_TRENCH (fast forward drive)
         # =================================================================
-        # Drive forward at a set speed for a set time.
+        # Drive forward at high speed toward the trench area.
         #
         # THE MATH: distance = speed × time
-        #   Example: 1.5 m/s × 2.0 seconds = 3.0 meters
+        #   We want to cover about 4.5 meters to reach the trench.
+        #   At 3.0 m/s for 1.5 seconds: 3.0 × 1.5 = 4.5 meters
         #
-        # We use set_drive_command() which takes values from -1.0 to 1.0
-        # as a fraction of kMaxSpeed. So to drive at 1.5 m/s when
-        # kMaxSpeed is 4.0 m/s, we pass 1.5/4.0 = 0.375
+        # set_drive_command takes a FRACTION of kMaxSpeed (-1.0 to 1.0).
+        # So for 3.0 m/s with kMaxSpeed = 4.0: fraction = 3.0 / 4.0 = 0.75
         #
-        # IMPORTANT: field_relative=True means "forward" is always toward
-        # the far end of the field (uses the gyroscope). If the robot
-        # turns, it still drives the same direction on the field.
-        elif self.state == "DRIVE_FORWARD":
-            drive_speed_mps = 1.5
-            drive_time_seconds = 2.0
-            # distance = 1.5 m/s × 2.0 s = 3.0 meters forward
-
-            speed_fraction = drive_speed_mps / constants.kMaxSpeed
+        # We also strafe slightly toward y = 0.6 (the trench y-position)
+        # to line up with the trench entrance.
+        #
+        # field_relative=True: "forward" stays toward the far wall even if
+        # the robot rotates. This uses the gyroscope.
+        elif self.state == "DRIVE_TO_TRENCH":
+            drive_speed = 3.0
+            strafe_speed = -0.3
+            drive_time = 1.5
+            # distance forward = 3.0 m/s × 1.5s = 4.5 meters
+            # slight rightward drift to line up with trench
 
             self.swerve_drive.set_drive_command(
-                speed_fraction,
+                drive_speed / constants.kMaxSpeed,
+                strafe_speed / constants.kMaxSpeed,
+                0.0,
+                True,
+                False,
+            )
+
+            # ---------------------------------------------------------
+            # INTAKE STUB: In a real match, you'd run the intake here
+            # to pick up balls as you drive through the trench.
+            #
+            # self.thunder_viking_super_scorer.intake()
+            # ---------------------------------------------------------
+
+            if t > drive_time:
+                self.state = "CHECK_TRENCH_TAG"
+                self.timer.restart()
+                dist = drive_speed * drive_time
+                print(f"[Auto] Drove ~{dist:.1f}m toward trench, checking for tag {self.trench_tag_id}")
+
+        # =================================================================
+        # STATE: CHECK_TRENCH_TAG (brief pause to read vision)
+        # =================================================================
+        # Slow down and check if we can see the trench AprilTag.
+        # This confirms we're in the right area of the field.
+        #
+        # We keep driving slowly forward while checking. If we see the
+        # trench tag, great — we know where we are. If not, we continue
+        # anyway (the time-based driving should have gotten us close).
+        #
+        # HOW TO READ LIMELIGHT DATA:
+        #   tv  = 1 if any tag is visible, 0 if not
+        #   tid = which tag ID is visible
+        #   tx  = horizontal angle offset in degrees (+ = right, - = left)
+        elif self.state == "CHECK_TRENCH_TAG":
+            check_time = 1.0
+
+            self.swerve_drive.set_drive_command(
+                1.0 / constants.kMaxSpeed,
                 0.0,
                 0.0,
                 True,
                 False,
             )
 
-            if t > drive_time_seconds:
-                self.state = "LOOK_FOR_TAG"
+            tv = self.ll.getNumber("tv", 0)
+            if tv >= 1:
+                tid = int(self.ll.getNumber("tid", -1))
+                tx = self.ll.getNumber("tx", 0.0)
+                if tid == self.trench_tag_id:
+                    print(f"[Auto] Confirmed trench tag {tid}! tx={tx:.1f}° — we're in the right spot")
+                else:
+                    print(f"[Auto] Saw tag {tid} (not trench tag {self.trench_tag_id}), continuing anyway")
+
+            if t > check_time:
+                self.state = "DRIVE_THROUGH_TRENCH"
                 self.timer.restart()
-                print(f"[Auto] Drove ~{drive_speed_mps * drive_time_seconds:.1f}m forward, now looking for AprilTags")
 
         # =================================================================
-        # STATE: LOOK_FOR_TAG
+        # STATE: DRIVE_THROUGH_TRENCH (continue forward to collect balls)
         # =================================================================
-        # Stop and look around for AprilTags. The Limelight (or simulated
-        # Limelight) publishes tag data to NetworkTables.
+        # Keep driving forward through the trench to grab more balls.
         #
-        # We slowly rotate to scan for tags. When we see one, we print
-        # the tag info and move to alignment.
+        # distance = 2.5 m/s × 1.5s = 3.75 meters through the trench
+        elif self.state == "DRIVE_THROUGH_TRENCH":
+            drive_speed = 2.5
+            drive_time = 1.5
+
+            self.swerve_drive.set_drive_command(
+                drive_speed / constants.kMaxSpeed,
+                0.0,
+                0.0,
+                True,
+                False,
+            )
+
+            # ---------------------------------------------------------
+            # INTAKE STUB: Still intaking balls as we drive through
+            #
+            # self.thunder_viking_super_scorer.intake()
+            # ---------------------------------------------------------
+
+            if t > drive_time:
+                self.state = "TURN_TO_GOAL"
+                self.timer.restart()
+                print("[Auto] Exiting trench, turning toward the goal!")
+
+        # =================================================================
+        # STATE: TURN_TO_GOAL (rotate to face the goal)
+        # =================================================================
+        # The goal is "above" us on the field (higher y value).
+        # We need to turn left (counter-clockwise) roughly 90 degrees
+        # to face toward the goal area.
         #
-        # KEY LIMELIGHT VALUES:
-        #   tv  = 1 if a tag is visible, 0 if not
-        #   tid = the AprilTag ID number (each tag on the field has a unique ID)
-        #   tx  = how many degrees left/right the tag is from our camera center
-        #         negative = tag is to the left, positive = to the right
-        #   botpose_wpiblue = our estimated field position based on the tag
+        # We rotate at a specific speed for a calculated time:
+        #   For a 90° turn at 2.5 rad/s:
+        #   time = angle / speed = (π/2) / 2.5 = 0.63 seconds
         #
-        # We use field_relative=False here so the rotation is relative to
-        # the robot itself, not the field. This way we spin in place
-        # regardless of which direction the robot is facing on the field.
-        elif self.state == "LOOK_FOR_TAG":
-            scan_timeout = 4.0
-            scan_rotate_speed = 0.15
+        # field_relative=False: rotation is relative to the robot,
+        # not the field. We spin in place.
+        elif self.state == "TURN_TO_GOAL":
+            turn_speed_radps = 2.5
+            turn_angle_rad = math.pi / 2
+            turn_time = turn_angle_rad / turn_speed_radps
+
+            rot_fraction = turn_speed_radps / constants.kMaxAngularSpeed
 
             self.swerve_drive.set_drive_command(
                 0.0,
                 0.0,
-                scan_rotate_speed,
+                rot_fraction,
+                False,
+                False,
+            )
+
+            if t > turn_time:
+                self.state = "DRIVE_TO_GOAL"
+                self.timer.restart()
+                print("[Auto] Turn complete, driving toward goal area!")
+
+        # =================================================================
+        # STATE: DRIVE_TO_GOAL (drive toward the goal)
+        # =================================================================
+        # The goal is about 3.4 meters away (y goes from ~0.6 to ~4.0).
+        # We also need to adjust our x position to line up.
+        #
+        # Since we just turned ~90° left, our "forward" now points
+        # toward the goal (in the +y direction on the field).
+        #
+        # distance = 3.0 m/s × 1.2s = 3.6 meters toward goal
+        #
+        # We use field_relative=True here so "forward" is toward +y
+        # (the direction we need to go) regardless of small rotation errors.
+        elif self.state == "DRIVE_TO_GOAL":
+            drive_speed = 3.0
+            drive_time = 1.2
+
+            self.swerve_drive.set_drive_command(
+                0.0,
+                drive_speed / constants.kMaxSpeed,
+                0.0,
+                True,
+                False,
+            )
+
+            if t > drive_time:
+                self.state = "FIND_GOAL_TAG"
+                self.timer.restart()
+                print(f"[Auto] Near goal area, scanning for goal tag {self.goal_tag_id}...")
+
+        # =================================================================
+        # STATE: FIND_GOAL_TAG (scan for the goal AprilTag)
+        # =================================================================
+        # Rotate slowly to find the goal AprilTag. Once we see it, we
+        # move to precise alignment.
+        #
+        # We specifically look for our goal tag ID — if we see a different
+        # tag, we keep scanning.
+        elif self.state == "FIND_GOAL_TAG":
+            scan_timeout = 3.0
+            scan_speed = 0.2
+
+            self.swerve_drive.set_drive_command(
+                0.0,
+                0.0,
+                scan_speed,
                 False,
                 False,
             )
@@ -203,45 +344,56 @@ class AprilTagDemoAuto:
             if tv >= 1:
                 tid = int(self.ll.getNumber("tid", -1))
                 tx = self.ll.getNumber("tx", 0.0)
-                botpose = self.ll.getNumberArray("botpose_wpiblue", [])
 
-                print(f"[Auto] Found AprilTag {tid}! tx={tx:.1f}° botpose={botpose}")
-                self.state = "ALIGN_TO_TAG"
+                if tid == self.goal_tag_id:
+                    print(f"[Auto] Found GOAL tag {tid}! tx={tx:.1f}° — aligning!")
+                    self.state = "ALIGN_TO_GOAL"
+                    self.timer.restart()
+                else:
+                    pass
+
+            if t > scan_timeout:
+                print(f"[Auto] Could not find goal tag {self.goal_tag_id}, attempting shoot anyway")
+                self.state = "SHOOT_STUB"
                 self.timer.restart()
 
-            elif t > scan_timeout:
-                print("[Auto] No tags found after scanning, moving to done")
-                self.state = "DONE"
-                self.timer.restart()
+            # ---------------------------------------------------------
+            # SHOOTER PREP STUB: Start spinning up shooter wheels
+            # while we're still aligning so they're ready when we are.
+            #
+            # self.thunder_viking_super_scorer.prepare_to_shoot()
+            # ---------------------------------------------------------
 
         # =================================================================
-        # STATE: ALIGN_TO_TAG
+        # STATE: ALIGN_TO_GOAL (precise alignment using AprilTag)
         # =================================================================
-        # Rotate the robot until the tag is centered in the camera (tx ≈ 0).
+        # Rotate the robot until the goal tag is centered in the camera.
         #
-        # HOW ALIGNMENT WORKS:
-        # tx tells us how far off-center the tag is:
-        #   tx > 0 → tag is to the right → rotate clockwise (negative rot)
-        #   tx < 0 → tag is to the left → rotate counter-clockwise (positive rot)
+        # HOW PROPORTIONAL CONTROL WORKS:
+        #   tx = degrees the tag is off-center (+ = right, - = left)
+        #   We set rotation = -tx × kP
+        #   When tx is large → fast correction
+        #   When tx is near 0 → tiny correction → we're aligned!
         #
-        # We use a simple proportional controller: rotation = -tx * kP
-        # When tx is large, we rotate fast. As tx gets closer to 0, we slow down.
+        #   kP = 0.03 (proportional gain — tune this on the real robot)
+        #   Higher kP = faster but might overshoot and oscillate
+        #   Lower kP = smoother but slower
         #
-        # WHAT IS kP? (Proportional gain)
-        # It's a tuning number that controls how aggressively we correct.
-        # Too small = slow to align. Too large = overshoots and oscillates.
-        # Start at 0.02 and adjust from there.
-        elif self.state == "ALIGN_TO_TAG":
-            align_timeout = 3.0
-            kP = 0.02
-            tx_tolerance = 2.0
+        # We also cap the rotation speed at ±0.4 so it doesn't whip around.
+        elif self.state == "ALIGN_TO_GOAL":
+            align_timeout = 2.5
+            kP = 0.03
+            tx_tolerance = 1.5
+            max_rot = 0.4
 
             tv = self.ll.getNumber("tv", 0)
-            if tv >= 1:
+            tid = int(self.ll.getNumber("tid", -1))
+
+            if tv >= 1 and tid == self.goal_tag_id:
                 tx = self.ll.getNumber("tx", 0.0)
 
                 rot_command = -tx * kP
-                rot_command = max(-0.3, min(0.3, rot_command))
+                rot_command = max(-max_rot, min(max_rot, rot_command))
 
                 self.swerve_drive.set_drive_command(
                     0.0,
@@ -252,58 +404,70 @@ class AprilTagDemoAuto:
                 )
 
                 if abs(tx) < tx_tolerance:
-                    print(f"[Auto] Aligned to tag! tx={tx:.1f}° — ready to shoot")
+                    print(f"[Auto] ALIGNED to goal! tx={tx:.1f}° — SHOOTING!")
                     self.state = "SHOOT_STUB"
                     self.timer.restart()
             else:
                 self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, False, False)
-                print("[Auto] Lost sight of tag during alignment")
+
+            # ---------------------------------------------------------
+            # SHOOTER PREP STUB: Keep wheels spinning during alignment
+            #
+            # self.thunder_viking_super_scorer.prepare_to_shoot()
+            # ---------------------------------------------------------
 
             if t > align_timeout:
-                print("[Auto] Alignment timed out, moving to shoot stub")
+                print("[Auto] Alignment timed out, shooting anyway!")
                 self.state = "SHOOT_STUB"
                 self.timer.restart()
 
         # =================================================================
-        # STATE: SHOOT_STUB
+        # STATE: SHOOT_STUB (fire the balls!)
         # =================================================================
-        # This is where you would command the scoring system to shoot.
-        # Right now it's just stubs showing HOW to do it.
+        # This is where you command the scoring system to shoot.
         #
-        # When ThunderVikingSuperScorer is wired into robot.py, you would:
-        #   1. Add the injection line at the top of this class (uncomment it)
+        # When ThunderVikingSuperScorer is wired into robot.py:
+        #   1. Uncomment the injection at the top of this class
         #   2. Uncomment the scoring commands below
         #
-        # The scoring sequence is:
-        #   prepare_to_shoot() → spins up shooter wheels
-        #   Wait until shooter is at speed
+        # The scoring sequence:
+        #   prepare_to_shoot() → spins up shooter wheels (call every cycle)
+        #   Wait for shooter.is_at_speed to be True
         #   shoot() → hopper pushes ball into spinning wheels
         elif self.state == "SHOOT_STUB":
+            shoot_time = 2.0
+
+            self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, False, False)
+
             # ---------------------------------------------------------
             # SCORING COMMANDS (uncomment when scorer is wired in)
             # ---------------------------------------------------------
-            # Step 1: Spin up the shooter wheels
             # self.thunder_viking_super_scorer.prepare_to_shoot()
             #
-            # Step 2: Check if wheels are at speed, then shoot
             # if self.thunder_viking_super_scorer.shooter.is_at_speed:
             #     self.thunder_viking_super_scorer.shoot()
-            #     print("[Auto] SHOOTING!")
+            #     print("[Auto] BALL LAUNCHED!")
             # ---------------------------------------------------------
 
-            print("[Auto] SHOOT STUB — scorer not wired in yet")
-            print("[Auto] In a real match, the ball would be launched here!")
-            self.state = "DONE"
-            self.timer.restart()
+            if t < 0.1:
+                print("[Auto] *** SHOOT STUB *** scorer not wired in yet")
+                print("[Auto] In a real match, balls would be launched here!")
+
+            if t > shoot_time:
+                self.state = "DONE"
+                self.timer.restart()
+                print("[Auto] Autonomous complete!")
 
         # =================================================================
         # STATE: DONE
         # =================================================================
-        # Stop everything. The robot sits still for the rest of auto.
         elif self.state == "DONE":
-            self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, True, False)
+            self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, False, False)
 
+    # =========================================================================
+    # on_disable — runs once when autonomous ends
+    # =========================================================================
     def on_disable(self):
         """Called when autonomous mode ends."""
-        self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, True, False)
+        self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, False, False)
         print("[Auto] Autonomous mode ended")

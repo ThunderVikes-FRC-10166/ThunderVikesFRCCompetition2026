@@ -70,16 +70,14 @@ RobotMain/
 
 ## Autonomous Modes
 
-### Trench Run Auto (DEFAULT)
-State machine: INIT → DRIVE_TO_TRENCH → CHECK_TRENCH_TAG → DRIVE_THROUGH_TRENCH → TURN_TO_GOAL → DRIVE_TO_GOAL → FIND_GOAL_TAG → ALIGN_TO_GOAL → SHOOT_STUB → DONE
-- Detects alliance (red/blue) and selects correct tag IDs (Blue: trench=28, goal=26; Red: trench=7, goal=10)
-- Drives fast down the trench collecting balls (speed × time = distance)
-- Confirms position via trench AprilTag
-- Turns toward goal, drives to goal area
-- Finds goal AprilTag and aligns using proportional control (tx → rotation)
-- Scorer stubs show how to intake during trench run and shoot at goal
-- Uses MagicBot injection (swerve_drive: SwerveDrive) — not the old self.robot pattern
-- Designed to complete within 20 seconds
+### Trench Run Auto — EXAMPLE (DEFAULT)
+EDUCATIONAL EXAMPLE — not the real competition auto. Shows students every technique needed to build their own autonomous mode. The robot drives through the motions but does not actually intake or shoot (scorer stubs only).
+- State machine: INIT → DRIVE_TO_TRENCH → CHECK_TRENCH_TAG → DRIVE_THROUGH_TRENCH → TURN_TO_GOAL → DRIVE_TO_GOAL → FIND_GOAL_TAG → ALIGN_TO_GOAL → SHOOT_STUB → DONE
+- Teaches: alliance detection, speed × time = distance, AprilTag reading (tv/tid/tx), proportional control alignment, MagicBot injection, scorer command stubs
+- Alliance-aware tag IDs (Blue: trench=28, goal=26; Red: trench=7, goal=10)
+- Includes a 7-step "how to build your own auto" guide in the file header
+- Designed to complete within 20 seconds (budget ~14s)
+- File contains "FOR YOUR REAL AUTO" notes in every state explaining what to change
 
 ### Drive Box (SIM) — legacy
 Simple time-based box pattern. Uses old `self.robot.swerve.drive()` API from robot_SIM.py.

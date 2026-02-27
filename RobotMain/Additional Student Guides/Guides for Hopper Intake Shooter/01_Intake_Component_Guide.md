@@ -26,6 +26,19 @@ When the arm motor is opening and the forward limit switch gets pressed, we know
 
 Think of limit switches like the bumpers at a bowling alley - they stop you from going too far.
 
+### How Limit Switches Connect to the Robot
+
+Limit switches are simple devices with two or three wires. They wire into the **roboRIO's Digital Input/Output (DIO) ports** — a row of numbered connectors on the robot's main brain. Each switch gets its own DIO channel number (like 0 and 1).
+
+In code, we read them using `wpilib.DigitalInput(channel)`. There's one important detail about how they work electrically:
+
+- `DigitalInput.get()` returns `True` when the switch is **NOT pressed** (circuit is open)
+- `DigitalInput.get()` returns `False` when the switch **IS pressed** (circuit is grounded)
+
+This is backwards from what you'd expect, so in our code we use `not` to flip it: `not self.arm_forward_limit.get()` returns `True` when the switch IS pressed.
+
+**Alternative approach:** REV SparkMax motor controllers also have built-in limit switch ports on the controller itself. If you wire the switches there instead of the roboRIO, you'd use `self.arm_spark.getForwardLimitSwitch()` and the SparkMax can even auto-stop the motor in hardware. Both approaches work — we use the roboRIO DIO approach in this guide because it's more common and keeps the switch logic in your code where you can see it.
+
 ---
 
 ## What Is a SparkMax?
@@ -73,6 +86,11 @@ kIntakeRollerCurrentLimit = 30
 # Idle modes
 kIntakeArmIdleMode = SparkMaxConfig.IdleMode.kBrake    # Hold position when stopped
 kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let roller spin freely when stopped
+
+# Limit switch DIO channels (roboRIO Digital Input/Output ports)
+# CHANGE THESE to match which DIO ports you wired your limit switches to!
+kIntakeArmForwardLimitDIO = 0   # DIO port 0 — forward limit switch (arm fully open)
+kIntakeArmReverseLimitDIO = 1   # DIO port 1 — reverse limit switch (arm fully closed)
 ```
 
 ### What Do These Mean?
@@ -80,6 +98,7 @@ kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let roller spin freely
 - **CAN IDs (30, 31)**: Each motor controller on the robot has a unique address on the CAN bus (the wiring network that connects everything). The numbers 30 and 31 are just defaults — **you must change these to match the actual CAN IDs assigned to your robot's intake motors**. Use the REV Hardware Client software (on a laptop plugged into the robot) to see what ID each SparkMax is set to.
 - **Motor speeds (0.5, 0.7)**: These are percentages. `0.5` means 50% power, `0.7` means 70% power. We don't need full speed for the arm, but we want the roller spinning faster to grab balls.
 - **Current limits (20, 30 amps)**: These prevent motors from drawing too much electrical current and overheating or tripping circuit breakers. The roller gets a higher limit because it works harder when grabbing balls.
+- **DIO channels (0, 1)**: These are the numbered ports on the roboRIO where the limit switches are wired. The roboRIO has 10 DIO ports (0–9). **You must change these to match which ports you actually plugged the limit switch wires into.**
 - **Idle modes**:
   - `kBrake` for the arm means when the motor stops, it actively resists movement. This keeps the arm from flopping around.
   - `kCoast` for the roller means when the motor stops, it spins freely. There's no reason to lock the roller when it's off.
@@ -91,6 +110,7 @@ kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let roller spin freely
 Open (or create) the file `RobotMain/components/intake.py` and start with these imports:
 
 ```python
+import wpilib
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
@@ -99,12 +119,13 @@ import constants
 
 ### What Each Import Does
 
+- **`wpilib`** - The main WPILib library. We need it for `DigitalInput` to read our limit switches from the roboRIO's DIO ports.
 - **`rev`** - The REV Robotics library. This gives us access to SparkMax motor controllers and their configuration.
 - **`SparkMax`** - The class that represents a REV SparkMax motor controller.
 - **`SparkMaxConfig`** - Used to build a configuration (settings) that we apply to a SparkMax.
 - **`SparkBase`** - The parent class of SparkMax (we import it in case we need shared types).
 - **`will_reset_to`** - MagicBot's safety feature that auto-resets variables every cycle.
-- **`constants`** - Our file full of robot settings (CAN IDs, speeds, etc.).
+- **`constants`** - Our file full of robot settings (CAN IDs, speeds, DIO channels, etc.).
 
 ---
 
@@ -158,8 +179,8 @@ The underscore `_` at the start is a Python convention meaning "this is private 
             rev.PersistMode.kPersistParameters,
         )
 
-        self.arm_forward_limit = self.arm_spark.getForwardLimitSwitch()
-        self.arm_reverse_limit = self.arm_spark.getReverseLimitSwitch()
+        self.arm_forward_limit = wpilib.DigitalInput(constants.kIntakeArmForwardLimitDIO)
+        self.arm_reverse_limit = wpilib.DigitalInput(constants.kIntakeArmReverseLimitDIO)
 ```
 
 ### Breaking It Down Piece by Piece
@@ -193,14 +214,15 @@ self.arm_spark.configure(
 - `kResetSafeParameters` means "start from factory defaults before applying our settings." This ensures no leftover settings from a previous program cause problems.
 - `kPersistParameters` means "save these settings to the SparkMax's memory." Even if power is lost, the settings survive.
 
-**Getting the limit switches:**
+**Setting up the limit switches:**
 ```python
-self.arm_forward_limit = self.arm_spark.getForwardLimitSwitch()
-self.arm_reverse_limit = self.arm_spark.getReverseLimitSwitch()
+self.arm_forward_limit = wpilib.DigitalInput(constants.kIntakeArmForwardLimitDIO)
+self.arm_reverse_limit = wpilib.DigitalInput(constants.kIntakeArmReverseLimitDIO)
 ```
-- The SparkMax has built-in support for limit switches. We grab references to the forward and reverse limit switch objects so we can check if they're pressed later.
-- Forward limit = arm is fully open.
-- Reverse limit = arm is fully closed.
+- We create two `DigitalInput` objects, one for each limit switch.
+- The number we pass in is the **DIO channel** on the roboRIO where the switch is wired (from our constants).
+- Forward limit (DIO 0) = arm is fully open.
+- Reverse limit (DIO 1) = arm is fully closed.
 
 ---
 
@@ -224,10 +246,10 @@ self.arm_reverse_limit = self.arm_spark.getReverseLimitSwitch()
         self._roller_running = False
 
     def is_open(self) -> bool:
-        return self.arm_forward_limit.get()
+        return not self.arm_forward_limit.get()
 
     def is_closed(self) -> bool:
-        return self.arm_reverse_limit.get()
+        return not self.arm_reverse_limit.get()
 ```
 
 ### What Each Method Does
@@ -236,8 +258,8 @@ self.arm_reverse_limit = self.arm_spark.getReverseLimitSwitch()
 - **`close_arm()`** - The opposite: sets "closing" to `True` and "opening" to `False`.
 - **`run_roller()`** - Sets the roller flag to `True`. The roller will spin in `execute()`.
 - **`stop()`** - Emergency stop! Sets all flags to `False` so everything stops.
-- **`is_open()`** - Returns `True` if the forward limit switch is pressed (arm is fully open). Other code can check this to know if the arm is ready.
-- **`is_closed()`** - Returns `True` if the reverse limit switch is pressed (arm is fully closed).
+- **`is_open()`** - Returns `True` if the forward limit switch is pressed (arm is fully open). Notice the `not` — remember, `DigitalInput.get()` returns `False` when pressed, so we flip it.
+- **`is_closed()`** - Returns `True` if the reverse limit switch is pressed (arm is fully closed). Same `not` logic.
 
 Notice how these methods are simple - they just set flags. The actual motor control happens in `execute()`. This separation is important in MagicBot: **request behavior in methods, apply behavior in execute()**.
 
@@ -285,6 +307,7 @@ The `set()` method on the SparkMax takes a value from -1.0 to 1.0:
 Here is the complete `intake.py` file. You can type this into `RobotMain/components/intake.py`:
 
 ```python
+import wpilib
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
@@ -320,8 +343,8 @@ class Intake:
             rev.PersistMode.kPersistParameters,
         )
 
-        self.arm_forward_limit = self.arm_spark.getForwardLimitSwitch()
-        self.arm_reverse_limit = self.arm_spark.getReverseLimitSwitch()
+        self.arm_forward_limit = wpilib.DigitalInput(constants.kIntakeArmForwardLimitDIO)
+        self.arm_reverse_limit = wpilib.DigitalInput(constants.kIntakeArmReverseLimitDIO)
 
     def open_arm(self) -> None:
         self._arm_opening = True
@@ -340,10 +363,10 @@ class Intake:
         self._roller_running = False
 
     def is_open(self) -> bool:
-        return self.arm_forward_limit.get()
+        return not self.arm_forward_limit.get()
 
     def is_closed(self) -> bool:
-        return self.arm_reverse_limit.get()
+        return not self.arm_reverse_limit.get()
 
     def execute(self) -> None:
         if self._arm_opening and not self.is_open():
@@ -382,6 +405,7 @@ You don't need to worry about steps 3 and 4 yet - those are covered in later gui
 | **CAN ID** | Unique address for each motor controller on the robot's wiring network |
 | **Brushless motor** | A more efficient type of motor (NEO motors are brushless) |
 | **Limit switch** | A physical button that tells us when something has reached a boundary |
+| **DIO (Digital Input/Output)** | Numbered ports on the roboRIO for simple on/off sensors like limit switches |
 | **`will_reset_to`** | MagicBot safety feature - variables reset every cycle so motors stop if code crashes |
 | **`setup()`** | Runs once at startup - create and configure hardware here |
 | **`execute()`** | Runs 50 times per second - control motors here based on the current state flags |

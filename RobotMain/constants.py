@@ -256,3 +256,29 @@ kDriveDeadband = 0.08        # Ignore tiny joystick movements (prevents drift)
 # 1 meter per second in the pressed direction. This is useful for
 # precise positioning on the field.
 kDpadSpeed = 1.0  # meters per second
+
+# =====================================
+# Intake constants
+# =====================================
+# The intake has two motors:
+# 1. ARM motor - moves the intake arm up/down using the limit switches
+# 2. ROLLER motor - spins to sweep balls into the robot
+
+# CAN IDs for intake motors (CHANGE THESE to match your robot's actual wiring!)
+kIntakeArmCanId = 30        # SparkMax controlling the arm pivot (default :30)
+kIntakeRollerCanId = 31     # SparkMax controlling the roller (default: 31)
+
+# motor speeds (percentage: -1.0 to 1.0)
+kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
+kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
+
+# Current limits (amps) - protects motors from burning out
+kIntakeArmCurrentLimit = 20
+kIntakeRollerCurrentLimit = 30
+
+# Idle modes
+kIntakeArmIdleMode = SparkMaxConfig.IdleMode.kBrake   # Hold position when stopped
+kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast   # let roller spin freely when stopped
+
+# ================================
+# hopper constants

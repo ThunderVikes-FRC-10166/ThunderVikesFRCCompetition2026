@@ -283,7 +283,7 @@ kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast   # let roller spin freel
 # limit switch DIO channels (robotRIO Digital Input/Output ports)
 # CHNAGE THESE to match which DIO parts you wired your limit switches to!
 kIntakeArmForwardLimitDIO = 0    # DIO port 0 - forward limit switch (arm fully open)
-kIntakeArmReversalLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully closed)
+kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully closed)
 
 # ====================================
 # hopper constants
@@ -295,7 +295,7 @@ kIntakeArmReversalLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully 
 
 # CAN IDs for hopper motors (CHANGE THESE to match your robot's actual wiring)
 kHopperMotor1CanId = 32 # Bottom roller, closest to intake (default: 32)
-kHopperMotor2Canid = 33 # Middle roller (default: 33)
+kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
 # Motor speeds for each direction

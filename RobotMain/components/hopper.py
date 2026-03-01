@@ -40,7 +40,7 @@ class Hopper:
 
     def setup(self) -> None:
         """
-        Called once when the robotg starts up.
+        Called once when the robot starts up.
 
         Creates all 3 hopper motor controllers and configures them
         with the correct settings (current limits, idle mode, etc.).
@@ -57,7 +57,7 @@ class Hopper:
         self.motor1.configure(
             config,
             rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kParameters.
+            rev.PersistMode.kPersistParameters.
         )
         self.motor2.configure(
             config,
@@ -95,9 +95,8 @@ class Hopper:
             Called every 20ms by MagicBot.
 
             Sets all 3 motors to the requested speed. If no method was called
-            this cycle, _motor_speed resets to 0.0 and thge hopper stops.
+            this cycle, _motor_speed resets to 0.0 and the hopper stops.
             """
             self.motor1.set(self._motor_speed)
             self.motor2.set(self._motor_speed)
             self.motor3.set(self._motor_speed)
-            

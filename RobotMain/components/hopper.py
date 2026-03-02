@@ -57,7 +57,7 @@ class Hopper:
         self.motor1.configure(
             config,
             rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kPersistParameters.
+            rev.PersistMode.kPersistParameters,
         )
         self.motor2.configure(
             config,

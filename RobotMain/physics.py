@@ -21,6 +21,9 @@ The simulation loop:
   → Moves robot on the simulation field
 """
 
+from ntcore import NetworkTableInstance
+from robotpy_apriltag import AprilTagFieldLayout
+from wpimath.geometry import Pose3d
 import math
 import wpilib
 import wpilib.simulation
@@ -60,6 +63,20 @@ class SimulatedModule:
 
         self.current_speed_mps = 0.0
         self.current_angle_rad = 0.0
+
+
+        self.ll_table = NetworkTableInstance.getDefault().getTable(constants.kLimelightTableName)
+        try:
+            self.tag_layout = AprilTagFieldLayout("resources/2026-rebuilt-welded.json")
+            self.vision_enabled = True
+        except Exception:
+            self.vision_enabled = False
+
+            self.cam_forward_m = constants.kCameraForwardOffsetMeters
+            self.cam_left_m = constants.kCameraLeftOffsetMeters
+            self.max_tag_distance_m = constants.kVisionMaxTagDistanceMeters
+            self.fov_half_angle_dog = constants.kVisionFovHalfAngleDegrees
+
 
     def update(self, dt):
         """
@@ -235,3 +252,66 @@ class PhysicsEngine:
                 pass
 
         self.physics_controller.drive(chassis_speeds, tm_diff)
+        self._update_vision_sim(now, tm_diff)
+
+    def _pick_visible_tag(self, robot_pose_2d):
+        if not self.vision_enabled:
+            return None
+
+        heading = robot_pose_2d.rotation()
+        cosA = heading.cos()
+        sinA = heading.sin()
+
+        cam_dx = self.cam_forward_m * cosA - self.cam_left_m * sinA
+        cam_dy = self.cam_forward_m * sinA + self.cam_left_m * cosA
+
+        cam_x = robot_pose_2d.X() + cam_dx
+        cam_y = robot_pose_2d.Y() + cam_dy
+
+        best = None
+
+        for tag in self.tag_layout.getTags():
+            tag_id = tag.ID
+            tag_pose: Pose3d = tag.pose
+
+            dx = tag_pose.X() - cam_x
+            dy = tag_pose.Y() - cam_y
+            dist = math.hypot(dx, dy)
+
+            if dist > self.max_tag_distance_m:
+                continue
+                tx_deg = math.degrees(math.atan2(rel_y, rel_x))
+
+            if abs(tx_deg) > self.fov_half_angle_deg:
+                continue
+
+            if best is None or dist < best(0):
+                best = (dist, tag_id, tx_deg)
+
+        if best is None:
+            return None
+
+        dist, tag_id, tx_deg = best
+        return (tag_id, tx_deg, dist)
+
+    def _update_vision_sim(self, now, tm_diff):
+        pose = self.physics_controller.get_pose()
+
+        seen = self._pick_visible_tag(pose)
+
+        if seen is None:
+            self.ll_table.putNumber("tv",0)
+            self.ll_table.putNumber("tid", -1)
+            self.ll_table.putNumber("tx", 0.0)
+            self.ll_table.putNumber("ty", 0.0)
+        else:
+            tag_id, tx_deg, dist_m = seen
+            self.ll_tableputNumber("tv", 1)
+            self.ll_table.putNumber("tid", tag_id)
+            self.ll_table.putNumber("tx", tx_deg)
+            self.ll_table.putNumber("ty", 0.0)
+
+            yaw_deg = math.degrees(self.sim_heading)
+            botpose = [pose.X(), pose.Y(), 0.0, 0.0, 0.0, yaw_deg, 11.0]
+            self.ll_table.putNumberArray("botpose_wpiblue", botpose)
+

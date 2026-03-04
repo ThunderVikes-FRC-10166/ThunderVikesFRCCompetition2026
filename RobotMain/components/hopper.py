@@ -22,6 +22,7 @@ from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
 import constants
 
+
 class Hopper:
     """
     MagicBot component that controls the hopper conveyor system.
@@ -46,57 +47,59 @@ class Hopper:
         with the correct settings (current limits, idle mode, etc.).
         """
 
-        self.motor1 = SparkMax(constants.kHopperMotor1CanId, SparkMax.MotorType.kBrushless)
-        self.motor2 = SparkMax(constants.kHopperMotor2CanId, SparkMax.MotorType.kBrushless)
-        self.motor3 = SparkMax(constants.kHopperMotor3CanId, SparkMax.MotorType.kBrushless)
+        # self.motor1 = SparkMax(constants.kHopperMotor1CanId, SparkMax.MotorType.kBrushless)
+        # self.motor2 = SparkMax(constants.kHopperMotor2CanId, SparkMax.MotorType.kBrushless)
+        # self.motor3 = SparkMax(constants.kHopperMotor3CanId, SparkMax.MotorType.kBrushless)
+        #
+        # config = SparkMaxConfig()
+        # config.setIdleMode(constants.kHopperMotorIdleMode)
+        # config.smartCurrentLimit(constants.kHopperMotorCurrentLimit)
+        #
+        # self.motor1.configure(
+        #     config,
+        #     rev.ResetMode.kResetSafeParameters,
+        #     rev.PersistMode.kPersistParameters,
+        # )
+        # self.motor2.configure(
+        #     config,
+        #     rev.ResetMode.kResetSafeParameters,
+        #     rev.PersistMode.kPersistParameters,
+        # )
+        # self.motor3.configure(
+        #     config,
+        #     rev.ResetMode.kResetSafeParameters,
+        #     rev.PersistMode.kPersistParameters,
+        # )
+        pass
 
-        config = SparkMaxConfig()
-        config.setIdleMode(constants.kHopperMotorIdleMode)
-        config.smartCurrentLimit(constants.kHopperMotorCurrentLimit)
+    def feed_from_intake(self) -> None:
+        """
+        Run the hopper to pull balls from the intake toward the shooter.
 
-        self.motor1.configure(
-            config,
-            rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kPersistParameters.
-        )
-        self.motor2.configure(
-            config,
-            rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kPersistParameters,
-        )
-        self.motor3.configure(
-            config,
-            rev.ResetMode.kResetSafeParameters,
-            rev.PersistMode.kPersistParameters,
-        )
+        This runs against the incline so it uses the higher intake speed.
+        """
+        self._motor_speed = constants.kHopperIntakeSpeed
 
-        def feed_from_intake(self) -> None:
-            """
-            Run the hopper to pull balls from the intake toward the shooter.
+    def feed_to_shooter(self) -> None:
+        """
+        Run the hopper to push balls toward the shooter.
 
-            This runs against the incline so it uses the higher intake speed.
-            """
-            self._motor_speed = constants.kHopperIntakeSpeed
+        Gravity assists in this direction so it uses the lower shooter speed.
+        """
+        self._motor_speed = constants.kHopperShooterSpeed
 
-        def feed_to_shooter(self) -> None:
-            """
-            Run the hopper to push balls toward the shooter.
+    def stop(self) -> None:
+        """stop all hopper motors immediately."""
+        self._motor_speed = 0.0
 
-            Gravity assists in this direction so it uses the lower shooter speed.
-            """
-            self._motor_speed = constants.kHopperShooterSpeed
+    def execute(self) -> None:
+        """
+        Called every 20ms by MagicBot.
 
-        def stop(self) -> None:
-            """stop all hopper motors immediately."""
-            self._motor_speed = 0.0
-
-        def execute(self) -> None:
-            """
-            Called every 20ms by MagicBot.
-
-            Sets all 3 motors to the requested speed. If no method was called
-            this cycle, _motor_speed resets to 0.0 and the hopper stops.
-            """
-            self.motor1.set(self._motor_speed)
-            self.motor2.set(self._motor_speed)
-            self.motor3.set(self._motor_speed)
+        Sets all 3 motors to the requested speed. If no method was called
+        this cycle, _motor_speed resets to 0.0 and the hopper stops.
+        """
+        # self.motor1.set(self._motor_speed)
+        # self.motor2.set(self._motor_speed)
+        # self.motor3.set(self._motor_speed)
+        pass

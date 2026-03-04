@@ -47,11 +47,11 @@ import wpimath.filter
 import wpimath.units
 import navx
 import ntcore
+import wpimath.estimator
 
 from magicbot import will_reset_to
 from .swerve_module import SwerveModule
 import constants
-
 
 class SwerveDrive:
     """
@@ -197,7 +197,7 @@ class SwerveDrive:
         # continuously update the robot's estimated position.
         #
         # This starts at position (0, 0) facing "forward".
-        self.odometry = wpimath.kinematics.SwerveDrive4Odometry(
+        self.pose_estimator = wpimath.estimator.SwerveDrive4PoseEstimator(
             self.kinematics,
             self.gyro.getRotation2d(),
             (
@@ -207,7 +207,14 @@ class SwerveDrive:
                 self.rear_right.get_position(),
             ),
             wpimath.geometry.Pose2d(),
+            (constants.kOdometryStdDevX, constants.kOdometryStdDevY, constants.kOdometryStdDevTheta),
+            (constants.kVisionStdDevX, constants.kVisionStdDevY, constants.kVisionStdDevTheta)
         )
+
+        self.limelight_table = ntcore.NetworkTableInstance.getDefault().getTable(
+            constants.kLimelightTableName
+        )
+        self.limelight_connected = False
 
         # =====================================================================
         # LIMELIGHT CAMERA (STUB)
@@ -283,11 +290,11 @@ class SwerveDrive:
         # This combines:
         # - Gyroscope: Which way are we facing?
         # - Wheel encoders: How far has each wheel moved since last cycle?
-        self.odometry.update(
+        self.pose_estimator.update(
             self.gyro.getRotation2d(),
             (
                 self.front_left.get_position(),
-                self.front_right.get_position(),
+                self.front_right.get_positon(),
                 self.rear_left.get_position(),
                 self.rear_right.get_position(),
             ),
@@ -492,7 +499,7 @@ class SwerveDrive:
 
         Returns a Pose2d with x, y coordinates (in meters) and rotation angle.
         """
-        return self.odometry.getPose()
+        return self.pose_estimator.getEstimatedPosition()
 
     def reset_odometry(self, pose: wpimath.geometry.Pose2d) -> None:
         """
@@ -501,7 +508,7 @@ class SwerveDrive:
         Use this at the start of autonomous when you know exactly where
         the robot is on the field.
         """
-        self.odometry.resetPosition(
+        self.pose_estimator.resetPosition(
             self.gyro.getRotation2d(),
             (
                 self.front_left.get_position(),
@@ -546,8 +553,40 @@ class SwerveDrive:
         #     # Use this to correct odometry
         #     self.limelight_pose = vision_pose
         #     self.limelight_connected = True
-        pass
+        tv = self.limelight_table.getNumber("tv", 0)
 
+        if tv < 1:
+            self.limelight_connected = False
+            return
+
+        botpose = self.limelight_table.getNumberArray("botpose_wpiblue", {})
+        if len(botpose) < 7:
+            self.limelight_connected = False
+            return
+
+        vision_x = botpose[0]
+        vision_y = botpose[1]
+        vision_yaw = botpose[5]
+        latency_ms = botpose[6]
+
+        vision_pose = wpimath.geometry.Pose2d(
+            vision_x,
+            vision_y,
+            wpimath.geometry.Rotation2d.fromDegrees(vision_yaw),
+        )
+
+        current_pose = self.pose_estimator.getEstimatedPosition()
+        distance_from_estimate = current_pose.translation().disance(
+            vision_pose.translation()
+        )
+
+        if distance_from_estimate > constants.kVisionMaxAcceptableDistance:
+            return
+
+        timestamp = wpilib.Timer.getFPGATimestamp() - (latency_ms / 1000.0)
+
+        self.pose_estimator.addVisionMeasurement(vision_pose, timestamp)
+        self.limelight_connected = True
 
 # =============================================================================
 # HELPER FUNCTIONS (Swerve Utils)

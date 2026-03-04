@@ -318,12 +318,12 @@ kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when
 # the two flywheels spin against each other to launch the ball out.
 
 # CAN IDs for the shooter motors (CHANGE THESE to match your robot's actual wiring)
-kShooterFeederCanId = 35         # Feeder motor (default: 35)
-kShooterFlywheelTopCanId = 36    # Top flywheel, leader (default: 36)
-kShooterFlywheelBottomCanId = 37 # Bottom flywheel, follower inverted (default: 37)
+kShooterFeederCanId = 8         # Feeder motor (default: 35)
+kShooterFlywheelTopCanId = 7    # Top flywheel, leader (default: 36)
+kShooterFlywheelBottomCanId = 6 # Bottom flywheel, follower inverted (default: 37)
 
 # Motor speeds
-kShooterFeederSpeed = 0.5        # Feeder speed (50% power)
+kShooterFeederSpeed = -0.5        # Feeder speed (50% power)
 kShooterFlywheelSpeed = 1.0      # Flywheel speed (100% power max launch distance)
 
 # How close the flywheel speed must be to the target before we feed the ball
@@ -337,3 +337,29 @@ kShooterFlywheelCurrentLimit = 40 # Flywheels need more current for high-speed s
 # idle modes
 kShooterFeederIdleMode = SparkMaxConfig.IdleMode.kBrake    # hold ball position
 kShooterFlywheelIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let flywheels spin down naturally
+
+# ====================================
+# vision/limelight constants
+# ====================================
+# the limelight camera detects apriltags on the field to help the robot
+# know exactly where it is. This work alongside the wheel odometry
+#
+# The limelight publishes data to NetworkTables automatically.
+# we read from the "limelight" table (the default table name).
+
+kLimelightTableName = "limelight"
+
+kVisionStdDevX = 0.9
+kVisionStdDevY = 0.9
+kVisionStdDevTheta = 0.9
+
+kOdometryStdDevX = 0.1
+kOdometryStdDevY = 0.1
+kOdometryStdDevTheta = 0.1
+
+kVisionMaxAcceptableDistance = 2.0
+
+kCameraForwardOffsetMeters = 0.30
+kCameraLeftOffsetMeters = 0.00
+kVisionMaxTagDistanceMeters = 5.0
+kVisionFovHalfAngleDegrees = 30.0

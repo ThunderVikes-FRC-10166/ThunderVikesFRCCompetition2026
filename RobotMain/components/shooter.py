@@ -37,17 +37,17 @@ class Shooter:
 
         self.feeder_spark.configure(
             feeder_config,
-            rev.RestMode.kRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
-        self.flywheel_top_configure(
+        self.flywheel_top_spark.configure(
             flywheel_top_config,
-            rev.RestMode.kRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
         self.flywheel_bottom_spark.configure(
             flywheel_bottom_config,
-            rev.RestMode.kBRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
 
@@ -68,7 +68,7 @@ class Shooter:
 
     def execute(self) -> None:
         if self._spin_up:
-            self.flywheel_top_spark.set(constants.kShooterFlyWheelSpeed)
+            self.flywheel_top_spark.set(constants.kShooterFlywheelSpeed)
         else:
             self.flywheel_top_spark.set(0.0)
 

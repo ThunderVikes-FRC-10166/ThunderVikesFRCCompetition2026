@@ -1,3 +1,4 @@
+
 # Guide 06: Vision, AprilTags, and Pose Estimation
 
 ## What You'll Learn

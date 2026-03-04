@@ -207,8 +207,7 @@ kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
-kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
+kTurningMotorCurrentLimit =  20  # Amps - turning motors need less power
 
 # =============================================================================
 # ABSOLUTE ENCODER OFFSETS

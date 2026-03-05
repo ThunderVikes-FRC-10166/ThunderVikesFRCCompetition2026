@@ -96,7 +96,7 @@ kRearRightChassisAngularOffset = 0    # 90 degrees
 
 # Front Left Module
 kFrontLeftDrivingCanId = 20
-kFrontLeftTurningCanId = 21
+kFrontLeftTurningCanId = 6
 
 # Front Right Module
 kFrontRightDrivingCanId = 17
@@ -207,7 +207,7 @@ kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
+kDrivingMotorCurrentLimit = 40  # Amps - drive motors work harder
 kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
 
 # =============================================================================

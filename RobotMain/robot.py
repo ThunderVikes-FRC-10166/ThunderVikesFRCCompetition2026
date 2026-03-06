@@ -50,6 +50,10 @@ import wpimath.filter
 import magicbot
 
 from components.swerve_drive import SwerveDrive
+from components.intake import Intake
+from components.hopper import Hopper
+from components.shooter import Shooter
+from components.thundervikes_super_scorer import ThunderVikesSuperScorer
 import constants
 
 
@@ -78,6 +82,11 @@ class SwerveRobot(magicbot.MagicRobot):
 
     swerve_drive: SwerveDrive
 
+    intake: Intake
+    hopper: Hopper
+    shooter: Shooter
+    super_scorer: ThunderVikesSuperScorer
+
     def createObjects(self) -> None:
         """
         Called when the robot first starts up.
@@ -97,6 +106,17 @@ class SwerveRobot(magicbot.MagicRobot):
         self.driver_controller = wpilib.XboxController(
             constants.kDriverControllerPort
         )
+
+        self.driver_controller = wpilib.XboxController(
+            constants.kDriverControllerPort
+        )
+        self.operator_controller = wpilib.XboxController(
+            constants.kOperatorControllerPort
+        )
+
+        self.x_speed_limiter = wpimath.filter.SlewRateLimiter(3)
+        self.y_speed_limiter = wpimath.filter.SlewRateLimiter(3)
+        self.rot_limiter = wpimath.filter.SlewRateLimiter(3)
 
         # =====================================================================
         # SLEW RATE LIMITERS
@@ -228,6 +248,14 @@ class SwerveRobot(magicbot.MagicRobot):
             x_speed, y_speed, rot, True, True
         )
         # wpilib.SmartDashboard.putNumber("bob", x_speed)
+
+        # ----Operator controls (scoring system) ----
+        if self.operator_controller.getXButtonPressed():
+            self.super_scorer.stop_all()
+        elif self.operator_controller.getAButton():
+            self.super_scorer.intake_ball()
+        elif self.operator_controller.getBbutton():
+            self.super_scorer.shoot_ball()
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

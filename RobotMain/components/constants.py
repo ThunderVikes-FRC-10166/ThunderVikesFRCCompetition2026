@@ -207,7 +207,7 @@ kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
+kDrivingMotorCurrentLimit = 40  # Amps - drive motors work harder
 kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
 
 # =============================================================================
@@ -256,3 +256,84 @@ kDriveDeadband = 0.08        # Ignore tiny joystick movements (prevents drift)
 # 1 meter per second in the pressed direction. This is useful for
 # precise positioning on the field.
 kDpadSpeed = 1.0  # meters per second
+
+# =====================================
+# Intake constants
+# =====================================
+# The intake has two motors:
+# 1. ARM motor - moves the intake arm up/down using the limit switches
+# 2. ROLLER motor - spins to sweep balls into the robot
+
+# CAN IDs for intake motors (CHANGE THESE to match your robot's actual wiring!)
+kIntakeArmCanId = 30        # SparkMax controlling the arm pivot (default :30)
+kIntakeRollerCanId = 31     # SparkMax controlling the roller (default: 31)
+
+# motor speeds (percentage: -1.0 to 1.0)
+kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
+kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
+
+# Current limits (amps) - protects motors from burning out
+kIntakeArmCurrentLimit = 20
+kIntakeRollerCurrentLimit = 30
+
+# Idle modes
+kIntakeArmIdleMode = SparkMaxConfig.IdleMode.kBrake   # Hold position when stopped
+kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast   # let roller spin freely when stopped
+
+# limit switch DIO channels (robotRIO Digital Input/Output ports)
+# CHANGE THESE to match which DIO parts you wired your limit switches to!
+kIntakeArmForwardLimitDIO = 0    # DIO port 0 - forward limit switch (arm fully open)
+kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully closed)
+
+# ====================================
+# hopper constants
+# ====================================
+# The hopper is a conveyor belt system with 3 motors spinning 3 rollers.
+# It sits on a slight incline so balls naturally roll toward the shooter side.
+# this means we need MORE power pulling from intake (uphill) and LESS power
+# pushing toward the shooter (gravity helps).
+
+# CAN IDs for hopper motors (CHANGE THESE to match your robot's actual wiring)
+kHopperMotor1CanId = 32 # Bottom roller, closest to intake (default: 32)
+kHopperMotor2CanId = 33 # Middle roller (default: 33)
+kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
+
+# Motor speeds for each direction
+kHopperIntakeSpeed = 0.6   # Speed when pulling balls FROM intake (against incline, needs more power)
+kHopperShooterSpeed = 0.4  # Speed when pushing balls TO shooter (gravity helps, less power needed)
+
+# Current limits (amps)
+kHopperMotorCurrentLimit = 25
+
+# Idle Mode
+kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when stopped
+
+# =====================================
+# Shooter Constants
+# =====================================
+# The shooter has 3 motors:
+# 1. FEEDER motor - pushes balls into the flywheels
+# 2. FLYWHEEL TOP motor - spins one direction (the LEADER)
+# 3. FLYWHEEL BOTTOM motor - spins the OPPOSITE direction (follows the leader)
+# the two flywheels spin against each other to launch the ball out.
+
+# CAN IDs for the shooter motors (CHANGE THESE to match your robot's actual wiring)
+kShooterFeederCanId = 35         # Feeder motor (default: 35)
+kShooterFlywheelTopCanId = 36    # Top flywheel, leader (default: 36)
+kShooterFlywheelBottomCanId = 37 # Bottom flywheel, follower inverted (default: 37)
+
+# Motor speeds
+kShooterFeederSpeed = 0.5        # Feeder speed (50% power)
+kShooterFlywheelSpeed = 1.0      # Flywheel speed (100% power max launch distance)
+
+# How close the flywheel speed must be to the target before we feed the ball
+# This is a percentage (0.85 = 85% of target speed)
+kShooterSpinUpThreshold = 0.85
+
+# Current limits (amps)
+kShooterFeederCurrentLimit = 25
+kShooterFlywheelCurrentLimit = 40 # Flywheels need more current for high-speed spinning
+
+# idle modes
+kShooterFeederIdleMode = SparkMaxConfig.IdleMode.kBrake    # hold ball position
+kShooterFlywheelIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let flywheels spin down naturally

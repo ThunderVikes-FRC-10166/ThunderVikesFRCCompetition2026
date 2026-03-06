@@ -49,11 +49,11 @@ import wpimath
 import wpimath.filter
 import magicbot
 
-from components.swerve_drive import SwerveDrive
-from components.intake import Intake
-from components.hopper import Hopper
-from components.shooter import Shooter
-from components.thundervikes_super_scorer import ThunderVikesSuperScorer
+from RobotMain.components.swerve_drive import SwerveDrive
+from RobotMain.components.intake import Intake
+from RobotMain.components.hopper import Hopper
+from RobotMain.components.shooter import Shooter
+from RobotMain.components.thundervikes_super_scorer import ThunderVikesSuperScorer
 import constants
 
 

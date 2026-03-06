@@ -7,7 +7,7 @@ import constants
 class Shooter:
     _spin_up = will_reset_to(False)
     _feed = will_reset_to(False)
-
+    _reverse_feeder = will_reset_to(False)
 
     def setup(self) -> None:
         self.feeder_spark = SparkMax(
@@ -63,6 +63,10 @@ class Shooter:
         self.spin_up = False
         self._feed = False
 
+    def reverse_feeder(self) -> None:
+        self._reverse_feeder = True
+
+
 
     def is_at_speed(self) -> bool:
         current_speed = abs(self.flywheel_encoder.getVelocity())
@@ -79,5 +83,7 @@ class Shooter:
 
         if self._feed:
             self.feeder_spark.set(constants.kShooterFeederSpeed)
+        elif self._reverse_feeder:
+            self.feeder_spark.set(-1*constants.kShooterFeederSpeed)
         else:
             self.feeder_spark.set(0.0)

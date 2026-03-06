@@ -17,6 +17,7 @@ class ThunderVikesSuperScorer:
     _want_intake = will_reset_to(False)
     _want_hopper = will_reset_to(False)
     _want_stop = will_reset_to(False)
+    _want_reverse_shooter = will_reset_to(False)
 
     def setup(self) -> None:
         self.state = self.IDLE
@@ -29,6 +30,9 @@ class ThunderVikesSuperScorer:
 
     def stop_all(self) -> None:
         self._want_stop = True
+
+    def reverse_shooter_feeder(self) -> None:
+        self._want_reverse_shooter = True
 
     def get_state(self) -> str:
         return self.state
@@ -46,6 +50,9 @@ class ThunderVikesSuperScorer:
                 self.state = self.INTAKING
             elif self._want_shoot:
                 self.state = self.SHOOTING
+            elif self._want_reverse_shooter:
+                self.hopper.stop()
+                self.shooter.reverse_feeder()
 
         if self.state == self.INTAKING:
             self.intake.open_arm()
@@ -65,11 +72,15 @@ class ThunderVikesSuperScorer:
                 self.state = self.INTAKING
 
         elif self.state == self.SHOOTING:
-            self.shooter.do_spin_up()
-            self.hopper.feed_to_shooter()
+            if self._want_reverse_shooter:
+                self.hopper.stop()
+                self.shooter.reverse_feeder()
+            else:
+                self.shooter.do_spin_up()
+                self.hopper.feed_to_shooter()
 
-            if self.shooter.is_at_speed():
-                self.shooter.feed()
+                if self.shooter.is_at_speed():
+                    self.shooter.feed()
 
             if not self._want_shoot:
                 self.state = self.IDLE

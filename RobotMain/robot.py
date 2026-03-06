@@ -160,9 +160,9 @@ class SwerveRobot(magicbot.MagicRobot):
 
         # X button (held): Lock wheels in X formation
         # This makes the robot really hard to push around
-        if self.driver_controller.getXButton():
-            self.swerve_drive.set_x_formation()
-            return  # Skip normal driving when X is held
+        # if self.driver_controller.getXButton():
+        #     self.swerve_drive.set_x_formation()
+        #     return  # Skip normal driving when X is held
 
         # =====================================================================
         # D-PAD CONTROL
@@ -250,12 +250,14 @@ class SwerveRobot(magicbot.MagicRobot):
         # wpilib.SmartDashboard.putNumber("bob", x_speed)
 
         # ----Operator controls (scoring system) ----
-        if self.operator_controller.getXButtonPressed():
+        if self.driver_controller.getXButtonPressed():
             self.super_scorer.stop_all()
-        elif self.operator_controller.getAButton():
+        elif self.driver_controller.getAButton():
             self.super_scorer.intake_ball()
-        elif self.operator_controller.getBbutton():
+        elif self.driver_controller.getRightTriggerAxis() > 0.5:
             self.super_scorer.shoot_ball()
+        elif self.driver_controller.getBButton():
+            self.super_scorer.reverse_shooter_feeder()
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

@@ -1,7 +1,7 @@
 from magicbot import will_reset_to
-from intake import Intake
-from hopper import Hopper
-from shooter import Shooter
+from .intake import Intake
+from .hopper import Hopper
+from .shooter import Shooter
 
 class ThunderVikesSuperScorer:
 
@@ -18,6 +18,7 @@ class ThunderVikesSuperScorer:
     _want_hopper = will_reset_to(False)
     _want_stop = will_reset_to(False)
     _want_reverse_shooter = will_reset_to(False)
+    _want_shoot = will_reset_to(False)
 
     def setup(self) -> None:
         self.state = self.IDLE

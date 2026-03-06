@@ -337,3 +337,9 @@ kShooterFlywheelCurrentLimit = 40 # Flywheels need more current for high-speed s
 # idle modes
 kShooterFeederIdleMode = SparkMaxConfig.IdleMode.kBrake    # hold ball position
 kShooterFlywheelIdleMode = SparkMaxConfig.IdleMode.kCoast  # Let flywheels spin down naturally
+
+#Voice
+kVoiceTeamNumber = 10166
+kVoiceNTTable = f"/voice/{kVoiceTeamNumber}"
+kVoiceDriveSpeed = 1.0
+kVoiceTurnSpeed = math.pi / 4

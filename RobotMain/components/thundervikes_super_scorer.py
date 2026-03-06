@@ -65,7 +65,7 @@ class ThunderVikesSuperScorer:
                 self.state = self.INTAKING
 
         elif self.state == self.SHOOTING:
-            self.shooter.spin_up()
+            self.shooter.do_spin_up()
             self.hopper.feed_to_shooter()
 
             if self.shooter.is_at_speed():
@@ -73,5 +73,10 @@ class ThunderVikesSuperScorer:
 
             if not self._want_shoot:
                 self.state = self.IDLE
+
+
+            self.intake.execute()
+            self.hopper.execute()
+            self.shooter.execute()
 
 

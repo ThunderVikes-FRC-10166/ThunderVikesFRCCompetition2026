@@ -37,27 +37,32 @@ class Shooter:
 
         self.feeder_spark.configure(
             feeder_config,
-            rev.RestMode.kRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
-        self.flywheel_top_configure(
+        self.flywheel_top_spark.configure(
             flywheel_top_config,
-            rev.RestMode.kRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
         self.flywheel_bottom_spark.configure(
             flywheel_bottom_config,
-            rev.RestMode.kBRestSafeParameters,
+            rev.ResetMode.kResetSafeParameters,
             rev.PersistMode.kPersistParameters,
         )
 
         self.flywheel_encoder = self.flywheel_top_spark.getEncoder()
 
-    def spin_up(self) -> None:
+    def do_spin_up(self) -> None:
         self._spin_up = True
 
     def feed(self) -> None:
         self._feed = True
+
+    def stop(self) -> None:
+        self.spin_up = False
+        self._feed = False
+
 
     def is_at_speed(self) -> bool:
         current_speed = abs(self.flywheel_encoder.getVelocity())
@@ -68,7 +73,7 @@ class Shooter:
 
     def execute(self) -> None:
         if self._spin_up:
-            self.flywheel_top_spark.set(constants.kShooterFlyWheelSpeed)
+            self.flywheel_top_spark.set(constants.kShooterFlywheelSpeed)
         else:
             self.flywheel_top_spark.set(0.0)
 

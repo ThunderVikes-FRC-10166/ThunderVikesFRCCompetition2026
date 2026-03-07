@@ -7,8 +7,8 @@ from RobotMain.components.thundervikes_super_scorer import ThunderVikesSuperScor
 import RobotMain.constants as constants
 
 
-class BlueR():
-    MODE_NAME = 'BLUE RIGHT SIDE'
+class BlueL():
+    MODE_NAME = 'BLUE LEFT SIDE'
     DEFAULT = False
 
     swerve_drive: SwerveDrive
@@ -17,7 +17,7 @@ class BlueR():
     def on_enable(self):
         self.timer = wpilib.Timer()
         self.timer.start()
-        self.state ='STEP 1'
+        self.state = 'STEP 1'
 
     def on_disable(self):
         self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, True, False)
@@ -38,16 +38,16 @@ class BlueR():
                 self.timer.reset()
         elif self.state == 'STEP 2':
             self.swerve_drive.set_drive_command(
-                0.0, 0.0, -1*math.pi /2.0, True, False
+                0.0, 0.0, 1*math.pi /2.0 , True, False
             )
             self.state = 'STEP 3'
             self.timer.reset()
         elif self.state == 'STEP 3':
-            if self.timer.get() > 0.16:
+            if self.timer.get() > 0.18:
 
-                if self.timer.get() < 0.8:
+                if self.timer.get() < 0.82:
                     self.swerve_drive.set_drive_command(
-                        0.0, 2.5/constants.kMaxSpeed, 0.0, True, False
+                        0.0, -2.5/constants.kMaxSpeed, 0.0, True, False
 
                     )
                 else:
@@ -58,7 +58,7 @@ class BlueR():
                     self.timer.reset()
             else:
                 self.swerve_drive.set_drive_command(
-                    0.0, 0.0, -1*math.pi / 2.0, True, False
+                    0.0, 0.0, 1*math.pi / 2.0, True, False
                 )
         elif self.state == 'STEP 4':
             if self.timer.get() < 1.0:
@@ -66,7 +66,7 @@ class BlueR():
             elif self.timer.get() > 1.0 + 1.0/8.0:
                 self.super_scorer.intake_ball()
                 self.swerve_drive.set_drive_command(
-                    0.0, 2.0/constants.kMaxSpeed, 0.0, True, False
+                    0.0, -2.0/constants.kMaxSpeed, 0.0, True, False
                 )
             else:
                 self.swerve_drive.set_drive_command(
@@ -78,11 +78,11 @@ class BlueR():
         elif self.state == 'STEP 5':
             if self.timer.get() < 0.8:
                 self.swerve_drive.set_drive_command(
-                    0.0, -2.0/constants.kMaxSpeed, 0.0, True, False
+                    0.0, 2.0/constants.kMaxSpeed, 0.0, True, False
                 )
-            elif self.timer.get() < 0.8 + 1.0/5.0:
+            elif self.timer.get() < 0.8 + 1.0/1.95:
                 self.swerve_drive.set_drive_command(
-                    0.0, 0.0, -1*math.pi/2.0, True, False
+                    0.0, 0.0, -1*math.pi,  True, False
                 )
             else:
                 self.state = 'STEP 6'

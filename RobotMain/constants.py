@@ -77,10 +77,10 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # Think of it like calibrating a compass - we need to know which way each
 # module thinks is "north" compared to the robot's actual "north" (forward).
 
-kFrontLeftChassisAngularOffset = math.pi   # -90 degrees
+kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
 kFrontRightChassisAngularOffset = 0              # 0 degrees
 kRearLeftChassisAngularOffset = math.pi          # 180 degrees
-kRearRightChassisAngularOffset = 0    # 90 degrees
+kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
 
 # =============================================================================
 # CAN BUS IDS
@@ -265,8 +265,8 @@ kDpadSpeed = 1.0  # meters per second
 # 2. ROLLER motor - spins to sweep balls into the robot
 
 # CAN IDs for intake motors (CHANGE THESE to match your robot's actual wiring!)
-kIntakeArmCanId = 30        # SparkMax controlling the arm pivot (default :30)
-kIntakeRollerCanId = 31     # SparkMax controlling the roller (default: 31)
+kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
+kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
 
 # motor speeds (percentage: -1.0 to 1.0)
 kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
@@ -281,7 +281,7 @@ kIntakeArmIdleMode = SparkMaxConfig.IdleMode.kBrake   # Hold position when stopp
 kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast   # let roller spin freely when stopped
 
 # limit switch DIO channels (robotRIO Digital Input/Output ports)
-# CHNAGE THESE to match which DIO parts you wired your limit switches to!
+# CHANGE THESE to match which DIO parts you wired your limit switches to!
 kIntakeArmForwardLimitDIO = 0    # DIO port 0 - forward limit switch (arm fully open)
 kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully closed)
 
@@ -294,7 +294,7 @@ kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully c
 # pushing toward the shooter (gravity helps).
 
 # CAN IDs for hopper motors (CHANGE THESE to match your robot's actual wiring)
-kHopperMotor1CanId = 32 # Bottom roller, closest to intake (default: 32)
+kHopperMotor1CanId = 4 # Bottom roller, closest to intake (default: 32)
 kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
@@ -318,9 +318,9 @@ kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when
 # the two flywheels spin against each other to launch the ball out.
 
 # CAN IDs for the shooter motors (CHANGE THESE to match your robot's actual wiring)
-kShooterFeederCanId = 35         # Feeder motor (default: 35)
-kShooterFlywheelTopCanId = 36    # Top flywheel, leader (default: 36)
-kShooterFlywheelBottomCanId = 37 # Bottom flywheel, follower inverted (default: 37)
+kShooterFeederCanId = 5         # Feeder motor (default: 35)
+kShooterFlywheelTopCanId = 8    # Top flywheel, leader (default: 36)
+kShooterFlywheelBottomCanId = 7 # Bottom flywheel, follower inverted (default: 37)
 
 # Motor speeds
 kShooterFeederSpeed = 0.5        # Feeder speed (50% power)

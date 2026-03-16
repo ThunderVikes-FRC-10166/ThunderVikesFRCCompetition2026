@@ -433,7 +433,7 @@ class SwerveDrive:
         # STEP 7: Send commands to modules
         # =====================================================================
         self.front_left.set_desired_state(fl)
-        self.front_right.set_desired_state(fr)
+        self.front_right.set_desired_state(fr, invert=True) #TODO test potential issue here -1138
         self.rear_left.set_desired_state(rl)
         self.rear_right.set_desired_state(rr)
 

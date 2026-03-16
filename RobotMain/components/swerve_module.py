@@ -300,7 +300,8 @@ class SwerveModule:
         )
 
     def set_desired_state(
-        self, desired_state: wpimath.kinematics.SwerveModuleState
+        self, desired_state: wpimath.kinematics.SwerveModuleState,
+            invert: bool = False,
     ) -> None:
         """
         Tell this module to go to a specific speed and angle.
@@ -318,11 +319,18 @@ class SwerveModule:
         3. Send the commands to the motor controllers' PID loops
         """
         # Add the chassis offset to convert from robot coordinates to module coordinates
-        corrected_state = wpimath.kinematics.SwerveModuleState(
-            desired_state.speed,
-            desired_state.angle
-            + wpimath.geometry.Rotation2d(self.chassis_angular_offset),
-        )
+        if invert and desired_state.angle + wpimath.geometry.Rotation2d(self.chassis_angular_offset) == wpimath.geometry.Rotation2d():
+            corrected_state = wpimath.kinematics.SwerveModuleState(
+                -1 * desired_state.speed,
+                desired_state.angle
+                + wpimath.geometry.Rotation2d(self.chassis_angular_offset),
+            )
+        else:
+            corrected_state = wpimath.kinematics.SwerveModuleState(
+                desired_state.speed,
+                desired_state.angle
+                + wpimath.geometry.Rotation2d(self.chassis_angular_offset),
+            )
 
         # Get where the module is currently pointing
         current_angle = wpimath.geometry.Rotation2d(

@@ -30,7 +30,7 @@ from rev import SparkMaxConfig, SparkFlexConfig
 
 # Maximum forward/sideways speed in meters per second
 # 4.0 m/s is about 8.9 mph - a solid speed for competition driving!
-kMaxSpeed = 4.0  # meters per second
+kMaxSpeed = 4.8  # meters per second
 
 # Maximum spinning speed - how fast the robot can rotate in place
 # 2π radians per second = one full rotation per second
@@ -78,8 +78,8 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # module thinks is "north" compared to the robot's actual "north" (forward).
 
 kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
-kFrontRightChassisAngularOffset = 0              # 0 degrees
-kRearLeftChassisAngularOffset = math.pi          # 180 degrees
+kFrontRightChassisAngularOffset = -math.pi / 2.0             # 0 degrees
+kRearLeftChassisAngularOffset = math.pi /2         # 180 degrees
 kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
 
 # =============================================================================
@@ -207,7 +207,7 @@ kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 40  # Amps - drive motors work harder
+kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
 kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
 
 # =============================================================================

@@ -47,32 +47,52 @@ class ThunderVikesSuperScorer:
             self.shooter.stop()
             return
         if self.state == self.IDLE:
-            if self._want_intake:
-                self.state = self.INTAKING
-            elif self._want_shoot:
+            # if self._want_intake:
+            #     self.state = self.INTAKING
+            # elif
+            if self._want_shoot:
                 self.state = self.SHOOTING
             elif self._want_reverse_shooter:
                 self.hopper.stop()
                 self.shooter.reverse_feeder()
 
-        if self.state == self.INTAKING:
-            self.intake.open_arm()
-            self.intake.run_roller()
-            self.hopper.feed_from_intake()
+        # if self.state == self.INTAKING:
+        #     self.intake.open_arm()
+        #     self.intake.run_roller()
+        #     self.hopper.feed_from_intake()
+        #
+        #     if not self._want_intake:
+        #         self.state = self.LOADED
+        #
+        # elif self.state == self.LOADED:
+        #     if not self.intake.is_closed():
+        #         self.intake.close_arm()
+        #
+        #     if self._want_shoot:
+        #         self.state = self.SHOOTING
+        #     elif  self._want_intake:
+        #         self.state = self.INTAKING
+        #
+        # elif self.state == self.SHOOTING:
+        #     if self._want_reverse_shooter:
+        #         self.hopper.stop()
+        #         self.shooter.reverse_feeder()
+        #     else:
+        #         self.shooter.do_spin_up()
+        #         self.hopper.feed_to_shooter()
+        #
+        #         if self.shooter.is_at_speed():
+        #             self.shooter.feed()
+        #
+        #     if not self._want_shoot:
+        #         self.state = self.IDLE
+        if self._want_shoot:
+            self.state = self.SHOOTING
+        elif self._want_reverse_shooter:
+            self.hopper.stop()
+            self.shooter.reverse_feeder()
 
-            if not self._want_intake:
-                self.state = self.LOADED
-
-        elif self.state == self.LOADED:
-            if not self.intake.is_closed():
-                self.intake.close_arm()
-
-            if self._want_shoot:
-                self.state = self.SHOOTING
-            elif  self._want_intake:
-                self.state = self.INTAKING
-
-        elif self.state == self.SHOOTING:
+        if self.state == self.SHOOTING:
             if self._want_reverse_shooter:
                 self.hopper.stop()
                 self.shooter.reverse_feeder()
@@ -87,7 +107,7 @@ class ThunderVikesSuperScorer:
                 self.state = self.IDLE
 
 
-            self.intake.execute()
+            # self.intake.execute()
             self.hopper.execute()
             self.shooter.execute()
 

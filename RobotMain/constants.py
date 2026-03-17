@@ -2,14 +2,17 @@
 constants.py - Robot Configuration Constants
 =============================================
 
+
 This file holds ALL the important numbers that define how our robot works.
 Think of it like the robot's "settings" file. If we need to change something
 about how the robot drives, turns, or behaves, we change it here.
+
 
 WHY A SEPARATE FILE?
 - Keeps all our "magic numbers" in one place
 - Easy to find and change values without digging through code
 - Students can quickly adjust the robot without understanding all the code
+
 
 UNITS:
 - Distances are in METERS (1 meter ≈ 3.28 feet)
@@ -18,9 +21,11 @@ UNITS:
 - CAN IDs are just numbers assigned to each motor controller on the CAN bus
 """
 
+
 import math
 import rev
 from rev import SparkMaxConfig, SparkFlexConfig
+
 
 # =============================================================================
 # DRIVE SPEED LIMITS
@@ -28,13 +33,16 @@ from rev import SparkMaxConfig, SparkFlexConfig
 # These are NOT the maximum speeds the robot CAN go, but the maximum speeds
 # we ALLOW the robot to go. Think of it like setting a speed limit.
 
+
 # Maximum forward/sideways speed in meters per second
 # 4.0 m/s is about 8.9 mph - a solid speed for competition driving!
-kMaxSpeed = 4.8  # meters per second
+kMaxSpeed = 4.0  # meters per second
+
 
 # Maximum spinning speed - how fast the robot can rotate in place
 # 2π radians per second = one full rotation per second
 kMaxAngularSpeed = 2 * math.pi  # radians per second
+
 
 # =============================================================================
 # SLEW RATE LIMITS (Acceleration Smoothing)
@@ -43,9 +51,11 @@ kMaxAngularSpeed = 2 * math.pi  # radians per second
 # Without these, the robot would jerk around when you move the joystick.
 # Think of it like cruise control that smoothly gets you up to speed.
 
+
 kDirectionSlewRate = 1.2   # How fast the drive direction can change (radians/sec)
 kMagnitudeSlewRate = 1.8   # How fast the drive speed can change (percent/sec)
 kRotationalSlewRate = 2.0  # How fast the rotation speed can change (percent/sec)
+
 
 # =============================================================================
 # CHASSIS DIMENSIONS
@@ -64,8 +74,10 @@ kRotationalSlewRate = 2.0  # How fast the rotation speed can change (percent/sec
 #   |        |
 #   RL ---- RR      ← kWheelBase = 0.60m (total front-to-back)
 
+
 kTrackWidth = 0.60  # Distance between left and right wheels (meters)
 kWheelBase = 0.60   # Distance between front and back wheels (meters)
+
 
 # =============================================================================
 # ANGULAR OFFSETS
@@ -77,10 +89,12 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # Think of it like calibrating a compass - we need to know which way each
 # module thinks is "north" compared to the robot's actual "north" (forward).
 
+
 kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
 kFrontRightChassisAngularOffset = -math.pi/ 2.0              # 0 degrees
-kRearLeftChassisAngularOffset = math.pi/2          # 180 degrees
+kRearLeftChassisAngularOffset = math.pi/ 2         # 180 degrees
 kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
+
 
 # =============================================================================
 # CAN BUS IDS
@@ -94,30 +108,37 @@ kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
 #
 # You set these IDs using the REV Hardware Client software on a Windows PC.
 
+
 # Front Left Module
 kFrontLeftDrivingCanId = 20
 kFrontLeftTurningCanId = 6
+
 
 # Front Right Module
 kFrontRightDrivingCanId = 17
 kFrontRightTurningCanId = 23
 
+
 # Rear Left Module
 kRearLeftDrivingCanId = 18
 kRearLeftTurningCanId = 22
 
+
 # Rear Right Module
 kRearRightDrivingCanId = 19
 kRearRightTurningCanId = 24
+
 
 # =============================================================================
 # SWERVE MODULE MECHANICAL CONSTANTS
 # =============================================================================
 # These numbers come from the physical hardware - the gears, wheels, and motors.
 
+
 # Should the turning encoder read backwards? Yes, because the MAXSwerve module
 # has a gear that reverses the direction between the motor and the output.
 kTurningEncoderInverted = True
+
 
 # GEAR RATIO for driving
 # The "gear ratio" is how many times the motor spins for each wheel rotation.
@@ -128,6 +149,7 @@ kTurningEncoderInverted = True
 #   - 14T pinion = 4.71 ratio (LOW torque, HIGH speed)
 kDrivingMotorReduction = 5.08  # Medium gear ratio
 
+
 # WHEEL SIZE
 # Our wheels are 3 inches in diameter.
 # We convert to meters because WPILib works in metric units.
@@ -135,10 +157,12 @@ kDrivingMotorReduction = 5.08  # Medium gear ratio
 kWheelDiameter = 0.0762  # meters (3 inches)
 kWheelCircumference = kWheelDiameter * math.pi  # How far the wheel travels in one rotation
 
+
 # MOTOR SPECS
 # The NEO motor (used in SparkFlex for driving) spins at 5676 RPM with no load.
 # We convert to rotations per second (RPS) by dividing by 60.
 kDrivingMotorFreeSpeedRps = 5676.0 / 60  # ~94.6 rotations per second
+
 
 # CONVERSION FACTORS
 # These convert the raw encoder readings into useful units.
@@ -147,13 +171,16 @@ kDrivingMotorFreeSpeedRps = 5676.0 / 60  # ~94.6 rotations per second
 #   wheel circumference / gear ratio = meters per motor rotation
 kDrivingEncoderPositionFactor = (kWheelDiameter * math.pi) / kDrivingMotorReduction
 
+
 # Velocity: We want METERS PER SECOND (how fast the wheel is moving)
 #   Same as position factor, but divided by 60 to convert from per-minute to per-second
 kDrivingEncoderVelocityFactor = kDrivingEncoderPositionFactor / 60.0
 
+
 # Free speed of the WHEEL (not the motor)
 # Motor free speed × wheel circumference / gear ratio
 kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumference) / kDrivingMotorReduction
+
 
 # TURNING ENCODER
 # The turning encoder measures the angle of the module in radians.
@@ -161,12 +188,14 @@ kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumference) / kD
 kTurningEncoderPositionFactor = 2 * math.pi  # radians per rotation
 kTurningEncoderVelocityFactor = (2 * math.pi) / 60.0  # radians per second
 
+
 # PID wrapping bounds for the turning motor
 # This tells the PID controller that 0 and 2π are the same position,
 # so it can take the shortest path (like going from 350° to 10° through 0°
 # instead of going the long way around).
 kTurningEncoderPositionPIDMinInput = 0
 kTurningEncoderPositionPIDMaxInput = kTurningEncoderPositionFactor  # 2π
+
 
 # =============================================================================
 # PID CONTROLLER GAINS
@@ -179,6 +208,7 @@ kTurningEncoderPositionPIDMaxInput = kTurningEncoderPositionFactor  # 2π
 # D (Derivative): Slows down as we approach the target. Prevents overshooting.
 # FF (Feed Forward): A prediction of what output is needed. Helps the P term.
 
+
 # DRIVING motor PID (controls wheel speed)
 kDrivingP = 0.04
 kDrivingI = 0
@@ -186,6 +216,7 @@ kDrivingD = 0
 kDrivingFF = 1 / kDriveWheelFreeSpeedRps  # Predict output based on desired speed
 kDrivingMinOutput = -1  # Full reverse
 kDrivingMaxOutput = 1   # Full forward
+
 
 # TURNING motor PID (controls module direction)
 kTurningP = 2      # Aggressive P gain for snappy turning response
@@ -195,9 +226,11 @@ kTurningFF = 0     # No feed forward needed for position control
 kTurningMinOutput = -1
 kTurningMaxOutput = 1
 
+
 # =============================================================================
 # MOTOR SETTINGS
 # =============================================================================
+
 
 # Idle mode: What happens when no power is being sent to the motor?
 # kBrake = Motor resists movement (like putting a car in park)
@@ -205,10 +238,12 @@ kTurningMaxOutput = 1
 kDrivingMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
+
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
+kDrivingMotorCurrentLimit = 40  # Amps - drive motors work harder
 kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
+
 
 # =============================================================================
 # ABSOLUTE ENCODER OFFSETS
@@ -224,30 +259,36 @@ kFrontRightAbsoluteEncoderOffset = 0.492
 kRearLeftAbsoluteEncoderOffset = 0.640
 kRearRightAbsoluteEncoderOffset = 0.781
 
+
 # =============================================================================
 # AUTONOMOUS CONSTANTS
 # =============================================================================
 # These control how the robot moves during the autonomous period
 # (first 15 seconds of the match when the robot drives itself).
 
+
 kAutoMaxSpeed = 3.0          # meters per second (slower than teleop for safety)
 kAutoMaxAcceleration = 2.0   # meters per second squared
 kAutoMaxAngularSpeed = math.pi       # radians per second
 kAutoMaxAngularAcceleration = math.pi  # radians per second squared
+
 
 # Auto PID controllers for path following
 kPXController = 0.5
 kPYController = 0.5
 kPThetaController = 0.5
 
+
 # =============================================================================
 # OPERATOR INTERFACE (CONTROLS)
 # =============================================================================
 # Port numbers for the joysticks/controllers plugged into the Driver Station.
 
+
 kDriverControllerPort = 0    # Main driver's controller
 kOperatorControllerPort = 1  # Operator's controller (for other mechanisms)
 kDriveDeadband = 0.08        # Ignore tiny joystick movements (prevents drift)
+
 
 # =============================================================================
 # D-PAD SPEED
@@ -257,6 +298,7 @@ kDriveDeadband = 0.08        # Ignore tiny joystick movements (prevents drift)
 # precise positioning on the field.
 kDpadSpeed = 1.0  # meters per second
 
+
 # =====================================
 # Intake constants
 # =====================================
@@ -264,26 +306,32 @@ kDpadSpeed = 1.0  # meters per second
 # 1. ARM motor - moves the intake arm up/down using the limit switches
 # 2. ROLLER motor - spins to sweep balls into the robot
 
+
 # CAN IDs for intake motors (CHANGE THESE to match your robot's actual wiring!)
 kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
 kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
+
 
 # motor speeds (percentage: -1.0 to 1.0)
 kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
 kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
 
+
 # Current limits (amps) - protects motors from burning out
 kIntakeArmCurrentLimit = 20
 kIntakeRollerCurrentLimit = 30
+
 
 # Idle modes
 kIntakeArmIdleMode = SparkMaxConfig.IdleMode.kBrake   # Hold position when stopped
 kIntakeRollerIdleMode = SparkMaxConfig.IdleMode.kCoast   # let roller spin freely when stopped
 
+
 # limit switch DIO channels (robotRIO Digital Input/Output ports)
 # CHANGE THESE to match which DIO parts you wired your limit switches to!
 kIntakeArmForwardLimitDIO = 0    # DIO port 0 - forward limit switch (arm fully open)
 kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully closed)
+
 
 # ====================================
 # hopper constants
@@ -293,20 +341,25 @@ kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully c
 # this means we need MORE power pulling from intake (uphill) and LESS power
 # pushing toward the shooter (gravity helps).
 
+
 # CAN IDs for hopper motors (CHANGE THESE to match your robot's actual wiring)
 kHopperMotor1CanId = 4 # Bottom roller, closest to intake (default: 32)
 kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
+
 # Motor speeds for each direction
 kHopperIntakeSpeed = 0.6   # Speed when pulling balls FROM intake (against incline, needs more power)
 kHopperShooterSpeed = 0.4  # Speed when pushing balls TO shooter (gravity helps, less power needed)
 
+
 # Current limits (amps)
 kHopperMotorCurrentLimit = 25
 
+
 # Idle Mode
 kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when stopped
+
 
 # =====================================
 # Shooter Constants
@@ -317,22 +370,27 @@ kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when
 # 3. FLYWHEEL BOTTOM motor - spins the OPPOSITE direction (follows the leader)
 # the two flywheels spin against each other to launch the ball out.
 
+
 # CAN IDs for the shooter motors (CHANGE THESE to match your robot's actual wiring)
 kShooterFeederCanId = 5         # Feeder motor (default: 35)
 kShooterFlywheelTopCanId = 8    # Top flywheel, leader (default: 36)
 kShooterFlywheelBottomCanId = 7 # Bottom flywheel, follower inverted (default: 37)
 
+
 # Motor speeds
 kShooterFeederSpeed = 0.5        # Feeder speed (50% power)
 kShooterFlywheelSpeed = 1.0      # Flywheel speed (100% power max launch distance)
+
 
 # How close the flywheel speed must be to the target before we feed the ball
 # This is a percentage (0.85 = 85% of target speed)
 kShooterSpinUpThreshold = 0.85
 
+
 # Current limits (amps)
 kShooterFeederCurrentLimit = 25
 kShooterFlywheelCurrentLimit = 40 # Flywheels need more current for high-speed spinning
+
 
 # idle modes
 kShooterFeederIdleMode = SparkMaxConfig.IdleMode.kBrake    # hold ball position

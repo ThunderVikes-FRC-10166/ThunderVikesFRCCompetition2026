@@ -71,7 +71,7 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # ANGULAR OFFSETS
 # =============================================================================
 # Each swerve module's turning encoder has a "home" position.
-# These offsets tell the code where each module's "forward" direction is
+# These offsets tell the code where each module's "forward" direction isy
 # relative to the chassis. This is a property of the MAXSwerve module design.
 #
 # Think of it like calibrating a compass - we need to know which way each
@@ -81,6 +81,12 @@ kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
 kFrontRightChassisAngularOffset = -math.pi / 2.0             # 0 degrees
 kRearLeftChassisAngularOffset = math.pi /2         # 180 degrees
 kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
+
+kFrontLeftChassisAngularOffsetTurn = math.pi / 2   # -90 degrees
+kFrontRightChassisAngularOffsetTurn = 0             # 0 degrees
+kRearLeftChassisAngularOffsetTurn = math.pi        # 180 degrees
+kRearRightChassisAngularOffsetTurn = -math.pi / 2
+
 
 # =============================================================================
 # CAN BUS IDS

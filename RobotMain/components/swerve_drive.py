@@ -50,7 +50,7 @@ import ntcore
 
 from magicbot import will_reset_to
 from .swerve_module import SwerveModule
-import constants
+import components.constants as constants
 
 
 class SwerveDrive:
@@ -134,6 +134,7 @@ class SwerveDrive:
             constants.kFrontLeftTurningCanId,
             constants.kFrontLeftChassisAngularOffset,
             constants.kFrontLeftAbsoluteEncoderOffset,
+            constants.kFrontLeftChassisAngularOffsetTurn
         )
 
         self.front_right = SwerveModule(
@@ -141,6 +142,7 @@ class SwerveDrive:
             constants.kFrontRightTurningCanId,
             constants.kFrontRightChassisAngularOffset,
             constants.kFrontRightAbsoluteEncoderOffset,
+            constants.kFrontRightChassisAngularOffsetTurn
         )
 
         self.rear_left = SwerveModule(
@@ -148,6 +150,7 @@ class SwerveDrive:
             constants.kRearLeftTurningCanId,
             constants.kRearLeftChassisAngularOffset,
             constants.kRearLeftAbsoluteEncoderOffset,
+            constants.kRearLeftChassisAngularOffsetTurn
         )
 
         self.rear_right = SwerveModule(
@@ -155,6 +158,7 @@ class SwerveDrive:
             constants.kRearRightTurningCanId,
             constants.kRearRightChassisAngularOffset,
             constants.kRearRightAbsoluteEncoderOffset,
+            constants.kRearRightChassisAngularOffsetTurn
         )
 
         # =====================================================================
@@ -432,10 +436,17 @@ class SwerveDrive:
         # =====================================================================
         # STEP 7: Send commands to modules
         # =====================================================================
-        self.front_left.set_desired_state(fl)
-        self.front_right.set_desired_state(fr, invert=True) #TODO test potential issue here -1138
-        self.rear_left.set_desired_state(rl)
-        self.rear_right.set_desired_state(rr)
+        if x_speed_commanded == 0.0 and y_speed_commanded == 0.0 and rot_delivered != 0.0:
+            self.front_left.set_desired_state_turn(fl)
+            self.front_right.set_desired_state_turn(fr, invert=True)  # TODO test potential issue here -1138
+            self.rear_left.set_desired_state_turn(rl)
+            self.rear_right.set_desired_state_turn(rr)
+        else:
+
+            self.front_left.set_desired_state(fl)
+            self.front_right.set_desired_state(fr, invert=True) #TODO test potential issue here -1138
+            self.rear_left.set_desired_state(rl)
+            self.rear_right.set_desired_state(rr)
 
     def set_x_formation(self) -> None:
         """

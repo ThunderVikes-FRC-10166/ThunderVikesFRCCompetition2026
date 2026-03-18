@@ -5,7 +5,7 @@ import sys
 # sys.path.append("..")
 from components.swerve_drive import SwerveDrive
 from components.thundervikes_super_scorer import ThunderVikesSuperScorer
-import constants as constants
+import components.constants as constants
 
 class DefaultStrategy():
     MODE_NAME = 'default_strategy'

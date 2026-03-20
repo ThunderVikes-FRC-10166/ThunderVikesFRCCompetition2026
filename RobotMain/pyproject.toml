@@ -6,7 +6,7 @@
 [tool.robotpy]
 
 # RobotPy version for the season (you already have this right)
-robotpy_version = "2026.2.1.1"
+robotpy_version = "2026.2.2"
 
 # Optional RobotPy extras (these are real extras provided by the robotpy meta package)
 # Pick what you actually use. "all" is fine for beginners.

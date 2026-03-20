@@ -2,9 +2,9 @@ import math
 
 import wpilib
 
-from RobotMain.components.swerve_drive import SwerveDrive
-from RobotMain.components.thundervikes_super_scorer import ThunderVikesSuperScorer
-import RobotMain.constants as constants
+from components.swerve_drive import SwerveDrive
+from components.thundervikes_super_scorer import ThunderVikesSuperScorer
+import components.constants as constants
 
 
 class BlueL():
@@ -12,7 +12,7 @@ class BlueL():
     DEFAULT = False
 
     swerve_drive: SwerveDrive
-    super_scorer: ThunderVikesSuperScorer
+    #super_scorer: ThunderVikesSuperScorer
 
     def on_enable(self):
         self.timer = wpilib.Timer()
@@ -21,7 +21,7 @@ class BlueL():
 
     def on_disable(self):
         self.swerve_drive.set_drive_command(0.0, 0.0, 0.0, True, False)
-        self.super_scorer.stop_all()
+        #self.super_scorer.stop_all()
 
     def on_iteration(self, time_elapsed):
         if self.state == 'STEP 1':
@@ -62,9 +62,10 @@ class BlueL():
                 )
         elif self.state == 'STEP 4':
             if self.timer.get() < 1.0:
-                self.super_scorer.intake_ball()
+                pass
+                #self.super_scorer.intake_ball()
             elif self.timer.get() > 1.0 + 1.0/8.0:
-                self.super_scorer.intake_ball()
+                #self.super_scorer.intake_ball()
                 self.swerve_drive.set_drive_command(
                     0.0, -2.0/constants.kMaxSpeed, 0.0, True, False
                 )
@@ -96,12 +97,13 @@ class BlueL():
                 self.swerve_drive.set_drive_command(
                     0.0, 0.0, 0.0, True, False
                 )
-                self.super_scorer.shoot_ball()
+                #self.super_scorer.shoot_ball()
                 self.state = 'STEP 7'
                 self.timer.reset()
         elif self.state == 'STEP 7':
             if self.timer.get() < 5.0:
-                self.super_scorer.shoot_ball()
+                pass
+                #self.super_scorer.shoot_ball()
             else:
                 self.state = 'STEP 8'
                 self.timer.reset()
@@ -119,4 +121,4 @@ class BlueL():
             self.swerve_drive.set_drive_command(
                 0.0, 0.0, 0.0, True, False
             )
-            self.super_scorer.stop_all()
+            #self.super_scorer.stop_all()

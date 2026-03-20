@@ -2,16 +2,16 @@ import math
 
 import wpilib
 
-from RobotMain.components.swerve_drive import SwerveDrive
-from RobotMain.components.thundervikes_super_scorer import ThunderVikesSuperScorer
-import RobotMain.constants as constants
+from components.swerve_drive import SwerveDrive
+from components.thundervikes_super_scorer import ThunderVikesSuperScorer
+import components.constants as constants
 
 class DefaultStrategy():
     MODE_NAME = 'default_strategy_red_backup'
     DEFAULT = False
 
     swerve_drive: SwerveDrive
-    super_scorer: ThunderVikesSuperScorer
+    # super_scorer: ThunderVikesSuperScorer
 
     def on_enable(self):
         self.timer = wpilib.Timer()

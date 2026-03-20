@@ -10,6 +10,7 @@ class Shooter:
     _reverse_feeder = will_reset_to(False)
 
     def setup(self) -> None:
+        self.ShootSpeed = constants.kShooterFlywheelSpeed
         self.feeder_spark = SparkMax(
             constants.kShooterFeederCanId, SparkMax.MotorType.kBrushless
         )
@@ -70,14 +71,27 @@ class Shooter:
 
     def is_at_speed(self) -> bool:
         current_speed = abs(self.flywheel_encoder.getVelocity())
-        target_rpm = abs(constants.kShooterFlywheelSpeed) * 5676.0 / 60.0
+        target_rpm = abs(self.ShootSpeed) * 5676.0 / 60.0
         if target_rpm ==0:
             return False
         return current_speed >= (target_rpm * constants.kShooterSpinUpThreshold)
 
+    def speed_up(self):
+        self.ShootSpeed = self.ShootSpeed + 0.1
+        if self.ShootSpeed > constants.kShooterFlywheelSpeed:
+            self.ShootSpeed = constants.kShooterFlywheelSpeed
+
+
+    def speed_dowm(self):
+        self.ShootSpeed = self.ShootSpeedv - 0.1
+        if self.ShootSpeed < 0.1:
+            self.ShootSpeed = 1
+
+
+
     def execute(self) -> None:
         if self._spin_up:
-            self.flywheel_top_spark.set(constants.kShooterFlywheelSpeed)
+            self.flywheel_top_spark.set(self.ShootSpeed)
         else:
             self.flywheel_top_spark.set(0.0)
 

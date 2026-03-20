@@ -49,12 +49,12 @@ import wpimath
 import wpimath.filter
 import magicbot
 
-from RobotMain.components.swerve_drive import SwerveDrive
-from RobotMain.components.intake import Intake
-from RobotMain.components.hopper import Hopper
-from RobotMain.components.shooter import Shooter
-from RobotMain.components.thundervikes_super_scorer import ThunderVikesSuperScorer
-import constants
+from components.swerve_drive import SwerveDrive
+from components.intake import Intake
+from components.hopper import Hopper
+from components.shooter import Shooter
+from components.thundervikes_super_scorer import ThunderVikesSuperScorer
+import components.constants as constants
 
 
 class SwerveRobot(magicbot.MagicRobot):
@@ -227,7 +227,12 @@ class SwerveRobot(magicbot.MagicRobot):
                 self.driver_controller.getLeftY(), constants.kDriveDeadband
             )
         )
-
+        # x_speed = -wpimath.applyDeadband(
+        #         self.driver_controller.getLeftY(), constants.kDriveDeadband
+        #     )
+        # y_speed = -wpimath.applyDeadband(
+        #         self.driver_controller.getLeftX(), constants.kDriveDeadband
+        #     )
         # Left/right (strafe) speed
         y_speed = -self.y_speed_limiter.calculate(
             wpimath.applyDeadband(
@@ -252,12 +257,13 @@ class SwerveRobot(magicbot.MagicRobot):
         # ----Operator controls (scoring system) ----
         if self.driver_controller.getXButtonPressed():
             self.super_scorer.stop_all()
-        elif self.driver_controller.getAButton():
-            self.super_scorer.intake_ball()
-        elif self.driver_controller.getRightTriggerAxis() > 0.5:
-            self.super_scorer.shoot_ball()
-        elif self.driver_controller.getBButton():
-            self.super_scorer.reverse_shooter_feeder()
+        else:
+            if self.driver_controller.getLeftTriggerAxis() > 0.5:
+                self.super_scorer.intake_ball()
+            if self.driver_controller.getRightTriggerAxis() > 0.5:
+                self.super_scorer.shoot_ball()
+            elif self.driver_controller.getBButton():
+                self.super_scorer.reverse_shooter_feeder()
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

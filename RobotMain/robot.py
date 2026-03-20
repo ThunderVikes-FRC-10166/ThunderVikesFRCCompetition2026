@@ -257,12 +257,13 @@ class SwerveRobot(magicbot.MagicRobot):
         # ----Operator controls (scoring system) ----
         if self.driver_controller.getXButtonPressed():
             self.super_scorer.stop_all()
-        elif self.driver_controller.getAButton():
-            self.super_scorer.intake_ball()
-        elif self.driver_controller.getRightTriggerAxis() > 0.5:
-            self.super_scorer.shoot_ball()
-        elif self.driver_controller.getBButton():
-            self.super_scorer.reverse_shooter_feeder()
+        else:
+            if self.driver_controller.getLeftTriggerAxis() > 0.5:
+                self.super_scorer.intake_ball()
+            if self.driver_controller.getRightTriggerAxis() > 0.5:
+                self.super_scorer.shoot_ball()
+            elif self.driver_controller.getBButton():
+                self.super_scorer.reverse_shooter_feeder()
 
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""

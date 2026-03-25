@@ -55,7 +55,7 @@ from components.hopper import Hopper
 from components.shooter import Shooter
 from components.thundervikes_super_scorer import ThunderVikesSuperScorer
 import components.constants as constants
-
+from components.voice_receiver import VoiceReceiver
 
 class SwerveRobot(magicbot.MagicRobot):
     """
@@ -86,6 +86,7 @@ class SwerveRobot(magicbot.MagicRobot):
     hopper: Hopper
     shooter: Shooter
     super_scorer: ThunderVikesSuperScorer
+    voice_receiver: VoiceReceiver
 
     def createObjects(self) -> None:
         """
@@ -135,7 +136,13 @@ class SwerveRobot(magicbot.MagicRobot):
         Teleop is the period of the match when the driver controls the robot
         (after autonomous ends). This is a good place to reset things.
         """
-        pass
+        self._voice_active = False
+        self._voice_start_time = 0.0
+        self._voice_duration = 0.0
+        self._voice_x = 0.0
+        self._voice_y = 0.0
+        self._voice_rot = 0.0
+
 
     def teleopPeriodic(self) -> None:
         """
@@ -265,6 +272,15 @@ class SwerveRobot(magicbot.MagicRobot):
             elif self.driver_controller.getBButton():
                 self.super_scorer.reverse_shooter_feeder()
 
+        # voice command
+        bumper_held = self.driver_controller.getLeftBumber()
+
+        if not bumper_held and self._voice_active:
+            self._voice_active = False
+
+        if self._voice_active:
+            elapsed = time.monotonic() -
+
     def autonomousInit(self) -> None:
         """Called once when autonomous mode starts."""
         # MagicBot handles autonomous mode selection automatically!
@@ -289,3 +305,4 @@ class SwerveRobot(magicbot.MagicRobot):
 
 if __name__ == "__main__":
     SwerveRobot.main()
+

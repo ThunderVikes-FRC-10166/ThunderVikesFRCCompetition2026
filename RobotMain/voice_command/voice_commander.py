@@ -341,5 +341,18 @@ def main():
             print("Connected!")
             table = nt_inst.getTable(NT_TABLE)
             table.putString("command", "none")
-            table.putString("command"
+            table.putNumber("command", "none")
+            table.putNumber("timestamp", 0.0)
+        else:
+            print("Could not connect - running in OFFLINE mode.\n")
+    else:
+        print("OFFLINE mode(install pyntcore to send commands to robot).\n")
+
+    if args.text:
+        run_text_mode(table)
+    else:
+        run_voice_mode(table,model_path,args.button)
+
+if __name__ == "__main__":
+    main()
 

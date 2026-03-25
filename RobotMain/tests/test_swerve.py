@@ -113,7 +113,7 @@ def test_module_desired_state():
     ]
 
     for name, offset, drive_id, turn_id in offsets:
-        mod = SwerveModule(drive_id, turn_id, offset, 0.0)
+        mod = SwerveModule(drive_id, turn_id, offset, 0.0, offset)
         state = kin.SwerveModuleState(1.0, geo.Rotation2d(0))
         mod.set_desired_state(state)
 
@@ -133,7 +133,7 @@ def test_physics_forward():
     from components.swerve_module import SwerveModule
     from physics import SimulatedModule
 
-    mod = SwerveModule(20, 21, 0.0, 0.0)
+    mod = SwerveModule(20, 21, 0.0, 0.0, 0.0)
     sim = SimulatedModule(mod, mod.driving_spark, mod.turning_spark)
 
     mod.desired_state = kin.SwerveModuleState(2.0, geo.Rotation2d(0))
@@ -196,7 +196,7 @@ def test_physics_all_directions():
         for drive_id, turn_id, offset in modules_data:
             drive_id_unique = drive_id + directions.index((dir_name, chassis_speeds, expected_vx, expected_vy)) * 10
             turn_id_unique = turn_id + directions.index((dir_name, chassis_speeds, expected_vx, expected_vy)) * 10
-            mod = SwerveModule(drive_id_unique, turn_id_unique, offset, 0.0)
+            mod = SwerveModule(drive_id_unique, turn_id_unique, offset, 0.0, offset)
             sim = SimulatedModule(mod, mod.driving_spark, mod.turning_spark)
             modules.append(mod)
             sim_modules.append(sim)

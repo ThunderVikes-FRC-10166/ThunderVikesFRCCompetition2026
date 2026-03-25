@@ -62,6 +62,7 @@ class SwerveModule:
         turn_can_id: int,
         chassis_angular_offset: float,
         absolute_encoder_offset: float,
+        chassis_angular_offset_turn: float,
     ) -> None:
         """
         Set up one swerve module.
@@ -255,6 +256,8 @@ class SwerveModule:
         # Remember the chassis angular offset for later calculations
         self.chassis_angular_offset = chassis_angular_offset
 
+        self.chassis_angular_offset_turn = chassis_angular_offset_turn
+
         # Set the initial desired state to "stopped, pointing current direction"
         self.desired_state = wpimath.kinematics.SwerveModuleState(
             0.0,
@@ -300,7 +303,8 @@ class SwerveModule:
         )
 
     def set_desired_state(
-        self, desired_state: wpimath.kinematics.SwerveModuleState
+        self, desired_state: wpimath.kinematics.SwerveModuleState,
+            invert: bool = False,
     ) -> None:
         """
         Tell this module to go to a specific speed and angle.
@@ -318,10 +322,64 @@ class SwerveModule:
         3. Send the commands to the motor controllers' PID loops
         """
         # Add the chassis offset to convert from robot coordinates to module coordinates
+
+        wpilib.SmartDashboard.putString("Goes into invert condition", "No")
         corrected_state = wpimath.kinematics.SwerveModuleState(
             desired_state.speed,
             desired_state.angle
             + wpimath.geometry.Rotation2d(self.chassis_angular_offset),
+        )
+
+        # Get where the module is currently pointing
+        current_angle = wpimath.geometry.Rotation2d(
+            self.turning_encoder.getPosition()
+        )
+
+        # OPTIMIZE: If we need to turn more than 90°, it's faster to turn less
+        # and reverse the drive direction.
+        # Example: Instead of turning 150° and driving forward, turn 30° and
+        # drive backward. Same result, less movement!
+        corrected_state.optimize(current_angle)
+
+        # Send the speed command to the drive motor PID (velocity control)
+        self.driving_pid.setReference(
+            corrected_state.speed, SparkFlex.ControlType.kVelocity
+        )
+
+        # Send the angle command to the turn motor PID (position control)
+        self.turning_pid.setReference(
+            corrected_state.angle.radians(), SparkMax.ControlType.kPosition
+        )
+
+        # Remember what we asked for (useful for debugging/logging)
+        self.desired_state = desired_state
+
+    def set_desired_state_turn(
+            self, desired_state: wpimath.kinematics.SwerveModuleState,
+            invert: bool = False,
+    ) -> None:
+        """
+        Tell this module to go to a specific speed and angle.
+
+        Parameters:
+        -----------
+        desired_state : SwerveModuleState
+            Contains the target speed (m/s) and angle (Rotation2d).
+
+        HOW IT WORKS:
+        1. Apply the chassis angular offset (convert from robot-relative
+           to module-relative coordinates)
+        2. Optimize the angle - if turning more than 90°, it's faster to
+           reverse the drive direction and turn less
+        3. Send the commands to the motor controllers' PID loops
+        """
+        # Add the chassis offset to convert from robot coordinates to module coordinates
+
+        wpilib.SmartDashboard.putString("Goes into invert condition", "No")
+        corrected_state = wpimath.kinematics.SwerveModuleState(
+            desired_state.speed,
+            desired_state.angle
+            + wpimath.geometry.Rotation2d(self.chassis_angular_offset_turn),
         )
 
         # Get where the module is currently pointing

@@ -32,7 +32,7 @@ from rev import SparkMaxConfig, SparkFlexConfig
 
 # Maximum forward/sideways speed in meters per second
 # 4.0 m/s is about 8.9 mph - a solid speed for competition driving!
-kMaxSpeed = 4.0  # meters per second
+kMaxSpeed = 4.8  # meters per second
 
 # Maximum spinning speed - how fast the robot can rotate in place
 # 2π radians per second = one full rotation per second
@@ -73,16 +73,22 @@ kWheelBase = 0.60   # Distance between front and back wheels (meters)
 # ANGULAR OFFSETS
 # =============================================================================
 # Each swerve module's turning encoder has a "home" position.
-# These offsets tell the code where each module's "forward" direction is
+# These offsets tell the code where each module's "forward" direction isy
 # relative to the chassis. This is a property of the MAXSwerve module design.
 #
 # Think of it like calibrating a compass - we need to know which way each
 # module thinks is "north" compared to the robot's actual "north" (forward).
 
 kFrontLeftChassisAngularOffset = math.pi / 2   # -90 degrees
-kFrontRightChassisAngularOffset = 0              # 0 degrees
-kRearLeftChassisAngularOffset = math.pi          # 180 degrees
+kFrontRightChassisAngularOffset = -math.pi / 2.0             # 0 degrees
+kRearLeftChassisAngularOffset = math.pi /2         # 180 degrees
 kRearRightChassisAngularOffset = -math.pi / 2     # 90 degrees
+
+kFrontLeftChassisAngularOffsetTurn = math.pi / 2   # -90 degrees
+kFrontRightChassisAngularOffsetTurn = 0             # 0 degrees
+kRearLeftChassisAngularOffsetTurn = math.pi        # 180 degrees
+kRearRightChassisAngularOffsetTurn = -math.pi / 2
+
 
 # =============================================================================
 # CAN BUS IDS
@@ -209,7 +215,7 @@ kTurningMotorIdleMode = SparkMaxConfig.IdleMode.kBrake
 
 # Current limits prevent the motors from drawing too much power
 # and potentially burning out or tripping breakers.
-kDrivingMotorCurrentLimit = 40  # Amps - drive motors work harder
+kDrivingMotorCurrentLimit = 50  # Amps - drive motors work harder
 kTurningMotorCurrentLimit = 20  # Amps - turning motors need less power
 
 # =============================================================================
@@ -267,8 +273,8 @@ kDpadSpeed = 1.0  # meters per second
 # 2. ROLLER motor - spins to sweep balls into the robot
 
 # CAN IDs for intake motors (CHANGE THESE to match your robot's actual wiring!)
-kIntakeArmCanId = 30        # SparkMax controlling the arm pivot (default :30)
-kIntakeRollerCanId = 31     # SparkMax controlling the roller (default: 31)
+kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
+kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
 
 # motor speeds (percentage: -1.0 to 1.0)
 kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
@@ -296,7 +302,7 @@ kIntakeArmReverseLimitDIO = 1   # DIO port 1 - reverse limit switch (arm fully c
 # pushing toward the shooter (gravity helps).
 
 # CAN IDs for hopper motors (CHANGE THESE to match your robot's actual wiring)
-kHopperMotor1CanId = 32 # Bottom roller, closest to intake (default: 32)
+kHopperMotor1CanId = 4 # Bottom roller, closest to intake (default: 32)
 kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
@@ -320,9 +326,9 @@ kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when
 # the two flywheels spin against each other to launch the ball out.
 
 # CAN IDs for the shooter motors (CHANGE THESE to match your robot's actual wiring)
-kShooterFeederCanId = 35         # Feeder motor (default: 35)
-kShooterFlywheelTopCanId = 36    # Top flywheel, leader (default: 36)
-kShooterFlywheelBottomCanId = 37 # Bottom flywheel, follower inverted (default: 37)
+kShooterFeederCanId = 5         # Feeder motor (default: 35)
+kShooterFlywheelTopCanId = 8    # Top flywheel, leader (default: 36)
+kShooterFlywheelBottomCanId = 7 # Bottom flywheel, follower inverted (default: 37)
 
 # Motor speeds
 kShooterFeederSpeed = 0.5        # Feeder speed (50% power)

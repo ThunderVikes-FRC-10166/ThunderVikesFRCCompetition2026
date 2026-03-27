@@ -84,7 +84,7 @@ Create the file `RobotMain/components/shooter.py` and add these imports at the t
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
-import constants
+import constants_old
 ```
 
 ### What Each Import Does
@@ -323,11 +323,10 @@ Here's the full `shooter.py` file, all together:
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
-import constants
+import constants_old
 
 
 class Shooter:
-
     _spin_up = will_reset_to(False)
     _feed = will_reset_to(False)
 

@@ -1,5 +1,5 @@
 """
-constants.py - Robot Configuration Constants
+constants.py - Robot Configuration Constants THIS IS IN COMPONENTS
 =============================================
 
 This file holds ALL the important numbers that define how our robot works.
@@ -275,11 +275,11 @@ kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
 kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
 
 # motor speeds (percentage: -1.0 to 1.0)
-kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
+kIntakeArmSpeed = 0.1       # how fast the arm opens/closes (50% power)
 kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
 
 # Current limits (amps) - protects motors from burning out
-kIntakeArmCurrentLimit = 20
+kIntakeArmCurrentLimit = 40
 kIntakeRollerCurrentLimit = 30
 
 # Idle modes

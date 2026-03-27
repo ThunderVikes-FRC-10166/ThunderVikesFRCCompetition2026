@@ -41,7 +41,7 @@ import wpimath.kinematics
 import wpimath.geometry
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkFlex, SparkFlexConfig, SparkBase
-import constants
+import components.constants as constants
 
 
 class SwerveModule:

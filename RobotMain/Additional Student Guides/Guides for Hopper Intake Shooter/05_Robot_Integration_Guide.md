@@ -41,7 +41,7 @@ from components.intake import Intake
 from components.hopper import Hopper
 from components.shooter import Shooter
 from components.thunder_vikes_super_scorer import ThunderVikesSuperScorer
-import constants
+import constants_old
 ```
 
 ### What each import does
@@ -222,11 +222,10 @@ from components.intake import Intake
 from components.hopper import Hopper
 from components.shooter import Shooter
 from components.thunder_vikes_super_scorer import ThunderVikesSuperScorer
-import constants
+import constants_old
 
 
 class SwerveRobot(magicbot.MagicRobot):
-
     swerve_drive: SwerveDrive
 
     intake: Intake

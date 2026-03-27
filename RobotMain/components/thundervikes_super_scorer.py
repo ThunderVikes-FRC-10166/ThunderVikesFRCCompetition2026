@@ -59,6 +59,7 @@ class ThunderVikesSuperScorer:
                 self.state = self.SHOOTING
             elif self._want_reverse_shooter:
                 self.state = self.REVERSING
+            # self.intake.close_arm()
 
         elif self.state == self.SHOOTING:
             if not self._want_shoot:

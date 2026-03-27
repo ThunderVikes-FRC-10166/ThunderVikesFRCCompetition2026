@@ -21,7 +21,7 @@ import wpimath.kinematics as kin
 from wpimath.system.plant import DCMotor
 import rev
 import math
-import constants
+import components.constants as constants
 
 hal.simulation.setDriverStationEnabled(True)
 hal.simulation.setDriverStationDsAttached(True)

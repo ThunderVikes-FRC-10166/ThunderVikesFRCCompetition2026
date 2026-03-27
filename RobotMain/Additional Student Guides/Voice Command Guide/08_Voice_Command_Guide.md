@@ -662,11 +662,10 @@ Now we switch to the **robot side**. This MagicBot component runs on the robot a
 ```python
 import wpilib
 from ntcore import NetworkTableInstance
-import constants
+import constants_old
 
 
 class VoiceReceiver:
-
     _last_timestamp = 0.0
     _current_command = ""
     _current_value = 0.0

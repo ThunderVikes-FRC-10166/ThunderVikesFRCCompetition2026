@@ -29,7 +29,7 @@ import wpimath.kinematics
 from wpimath.system.plant import DCMotor
 import rev
 
-import constants
+import components.constants as constants
 
 
 class SimulatedModule:

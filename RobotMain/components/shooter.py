@@ -1,7 +1,7 @@
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
-import constants
+import components.constants as constants
 
 
 class Shooter:

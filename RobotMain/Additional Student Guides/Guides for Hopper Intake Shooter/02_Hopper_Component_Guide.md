@@ -112,7 +112,7 @@ MAGICBOT COMPONENT:
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
-import constants
+import constants_old
 ```
 
 **What are these imports?**
@@ -333,7 +333,7 @@ MAGICBOT COMPONENT:
 import rev
 from rev import SparkMax, SparkMaxConfig, SparkBase
 from magicbot import will_reset_to
-import constants
+import constants_old
 
 
 class Hopper:

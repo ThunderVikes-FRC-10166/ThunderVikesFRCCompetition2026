@@ -275,11 +275,11 @@ kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
 kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
 
 # motor speeds (percentage: -1.0 to 1.0)
-kIntakeArmSpeed = 0.1       # how fast the arm opens/closes (50% power)
-kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
+kIntakeArmSpeed = 0.31       # how fast the arm opens/closes (50% power)
+kIntakeRollerSpeed = 1    # how fast the roller spins to grab balls (70% power)
 
 # Current limits (amps) - protects motors from burning out
-kIntakeArmCurrentLimit = 40
+kIntakeArmCurrentLimit = 35
 kIntakeRollerCurrentLimit = 30
 
 # Idle modes
@@ -305,7 +305,7 @@ kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
 # Motor speeds for each direction
-kHopperIntakeSpeed = 0.6   # Speed when pulling balls FROM intake (against incline, needs more power)
+kHopperIntakeSpeed = -0.6   # Speed when pulling balls FROM intake (against incline, needs more power)
 kHopperShooterSpeed = 0.4  # Speed when pushing balls TO shooter (gravity helps, less power needed)
 
 # Current limits (amps)

@@ -269,7 +269,7 @@ kIntakeArmCanId = 3        # SparkMax controlling the arm pivot (default :30)
 kIntakeRollerCanId = 2     # SparkMax controlling the roller (default: 31)
 
 # motor speeds (percentage: -1.0 to 1.0)
-kIntakeArmSpeed = 0.5       # how fast the arm opens/closes (50% power)
+kIntakeArmSpeed = 0.01       # how fast the arm opens/closes (50% power)
 kIntakeRollerSpeed = 0.7    # how fast the roller spins to grab balls (70% power)
 
 # Current limits (amps) - protects motors from burning out
@@ -299,11 +299,11 @@ kHopperMotor2CanId = 33 # Middle roller (default: 33)
 kHopperMotor3CanId = 34 # Top roller, closest to shooter (default: 34)
 
 # Motor speeds for each direction
-kHopperIntakeSpeed = 0.6   # Speed when pulling balls FROM intake (against incline, needs more power)
+kHopperIntakeSpeed = -0.4   # Speed when pulling balls FROM intake (against incline, needs more power)
 kHopperShooterSpeed = 0.4  # Speed when pushing balls TO shooter (gravity helps, less power needed)
 
 # Current limits (amps)
-kHopperMotorCurrentLimit = 25
+kHopperMotorCurrentLimit = 40 #25
 
 # Idle Mode
 kHopperMotorIdleMode = SparkMaxConfig.IdleMode.kBrake # Hold balls in place when stopped
@@ -323,8 +323,8 @@ kShooterFlywheelTopCanId = 8    # Top flywheel, leader (default: 36)
 kShooterFlywheelBottomCanId = 7 # Bottom flywheel, follower inverted (default: 37)
 
 # Motor speeds
-kShooterFeederSpeed = 0.5        # Feeder speed (50% power)
-kShooterFlywheelSpeed = 1.0      # Flywheel speed (100% power max launch distance)
+kShooterFeederSpeed = -0.5        # Feeder speed (50% power)
+kShooterFlywheelSpeed = -1.0      # Flywheel speed (100% power max launch distance)
 
 # How close the flywheel speed must be to the target before we feed the ball
 # This is a percentage (0.85 = 85% of target speed)

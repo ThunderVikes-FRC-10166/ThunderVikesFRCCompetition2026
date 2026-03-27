@@ -329,8 +329,8 @@ kShooterFlywheelTopCanId = 8    # Top flywheel, leader (default: 36)
 kShooterFlywheelBottomCanId = 7 # Bottom flywheel, follower inverted (default: 37)
 
 # Motor speeds
-kShooterFeederSpeed = 0.5        # Feeder speed (50% power)
-kShooterFlywheelSpeed = 1.0      # Flywheel speed (100% power max launch distance)
+kShooterFeederSpeed = 0.7        # Feeder speed (50% power)
+kShooterFlywheelSpeed = -0.7      # Flywheel speed (100% power max launch distance)
 
 # How close the flywheel speed must be to the target before we feed the ball
 # This is a percentage (0.85 = 85% of target speed)

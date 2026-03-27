@@ -79,9 +79,11 @@ class ThunderVikesSuperScorer:
 
             # Optional: allow intake to run during shooting
             if self._want_intake:
+                self.intake.open_arm()
                 self.intake.run_roller()
             else:
-                self.intake.stop()
+                self.intake.close_arm()
+                # self.intake.stop()
 
             # Spin up shooter
             self.shooter.do_spin_up()
@@ -98,8 +100,9 @@ class ThunderVikesSuperScorer:
         # -----------------------------
         elif self.state == self.REVERSING:
             self.intake.stop()
-            self.hopper.stop()
+            # self.hopper.stop()
             self.shooter.reverse_feeder()
+            self.hopper.reverse_feeder()
 
         # -----------------------------
         # IDLE MODE (normal intake allowed)
@@ -111,7 +114,7 @@ class ThunderVikesSuperScorer:
                 self.intake.open_arm()
                 self.intake.run_roller()
             else:
-                self.intake.stop()
+                self.intake.close_arm()
 
             # Hopper + shooter idle
             self.hopper.stop()

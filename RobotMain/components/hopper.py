@@ -38,7 +38,8 @@ class Hopper:
     """
 
     _motor_speed = will_reset_to(0.0)
-
+    _hopper_on = will_reset_to(False)
+    _reverse_hopper = will_reset_to(False)
     def setup(self) -> None:
         """
         Called once when the robot starts up.
@@ -85,11 +86,17 @@ class Hopper:
 
         Gravity assists in this direction so it uses the lower shooter speed.
         """
-        self._motor_speed = constants.kHopperShooterSpeed
+        # self._motor_speed = constants.kHopperShooterSpeed
+        self._hopper_on = True
+
+    def reverse_feeder(self) -> None:
+        self._reverse_hopper = True
 
     def stop(self) -> None:
         """stop all hopper motors immediately."""
-        self._motor_speed = 0.0
+        # self._motor_speed = 0.0
+        self._hopper_on = False
+        self._reverse_hopper = False
 
     def execute(self) -> None:
         """
@@ -98,6 +105,12 @@ class Hopper:
         Sets all 3 motors to the requested speed. If no method was called
         this cycle, _motor_speed resets to 0.0 and the hopper stops.
         """
-        self.motor1.set(self._motor_speed)
+        if self._hopper_on:
+            self.motor1.set(constants.kHopperIntakeSpeed)
+        elif self._reverse_hopper:
+            self.motor1.set(-1*constants.kHopperIntakeSpeed)
+        else:
+            self.motor1.set(0.0)
+        # self.motor1.set(self._motor_speed)
         # self.motor2.set(self._motor_speed)
         # self.motor3.set(self._motor_speed)
